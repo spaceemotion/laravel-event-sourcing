@@ -15,6 +15,7 @@
         "issues": "https://github.com/spaceemotion/laravel-event-sourcing/issues"
     },
     "require": {
+        "ext-json": "*",
         "php": "^7.3",
         "illuminate/support": "^6.5"
     },
