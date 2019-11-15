@@ -5,7 +5,7 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/spaceemotion/laravel-event-sourcing.svg?style=flat-square)](https://packagist.org/packages/spaceemotion/laravel-event-sourcing)
 [![Total Downloads](https://img.shields.io/packagist/dt/spaceemotion/laravel-event-sourcing.svg?style=flat-square)](https://packagist.org/packages/spaceemotion/laravel-event-sourcing)
 [![Actions Status](https://github.com/spaceemotion/laravel-event-sourcing/workflows/CI/badge.svg)](https://github.com/spaceemotion/laravel-event-sourcing/actions)
-[![CodeCov Status](https://codecov.io/gh/spaceemotion/laravel-event-sourcing/branch/master/graph/badge.svg)(https://codecov.io/gh/spaceemotion/laravel-event-sourcing)]
+[![CodeCov Status](https://codecov.io/gh/spaceemotion/laravel-event-sourcing/branch/master/graph/badge.svg)](https://codecov.io/gh/spaceemotion/laravel-event-sourcing)
 
 Opiniated event sourcing framework for Laravel optimized for speed and type safety.
 <!--This is where the description goes. Try to limit it to a paragraph or two. Consider adding a small, easy to understand example.-->
