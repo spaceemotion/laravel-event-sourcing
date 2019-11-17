@@ -7,7 +7,6 @@ namespace Spaceemotion\LaravelEventSourcing\EventStore;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Marshaler;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
