@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing;
 
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+use Spaceemotion\LaravelEventSourcing\ClassMapper\ConfigurableEventClassMapper;
+use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 
 class ServiceProvider extends LaravelServiceProvider
 {
@@ -13,5 +15,12 @@ class ServiceProvider extends LaravelServiceProvider
         $this->publishes([
             __DIR__ . '/../config/laravel-event-sourcing.php' => config_path('laravel-event-sourcing.php'),
         ]);
+    }
+
+    public function register(): void
+    {
+        $this->app->singleton(EventClassMapper::class, static function () {
+            return new ConfigurableEventClassMapper(config('laravel-event-sourcing.event_class', []));
+        });
     }
 }
