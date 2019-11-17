@@ -39,6 +39,17 @@ class DynamoDbEventStoreTest extends TestCase
     }
 
     /** @test */
+    public function it_loads_nothing_for_empty_aggregate_roots(): void
+    {
+        $root = TestAggregateRoot::new()->rebuild($this->store);
+        $events = [];
+
+        array_push($events, ...$root->flushEvents());
+
+        self::assertCount(0, $events);
+    }
+
+    /** @test */
     public function it_properly_handles_bulk_insertion(): void
     {
         $root = TestAggregateRoot::new();
