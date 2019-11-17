@@ -10,6 +10,8 @@ use Spaceemotion\LaravelEventSourcing\EventStore\EventStore;
 use Spaceemotion\LaravelEventSourcing\EventStore\SnapshotEventStore;
 use Traversable;
 
+use function get_class;
+
 /**
  * The aggregate root is the source of truth. It holds the source data,
  * validates before modification and records any events.
