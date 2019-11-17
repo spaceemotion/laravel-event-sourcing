@@ -12,8 +12,8 @@ use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 
 use function env;
-use function sprintf;
 use function in_array;
+use function sprintf;
 
 class DynamoDbEventStoreTest extends TestCase
 {
@@ -42,7 +42,7 @@ class DynamoDbEventStoreTest extends TestCase
         ]);
 
         if (!in_array($tableName, $client->listTables()->get('TableNames'), true)) {
-            self::assertNotNull($client->createTable([
+            $client->createTable([
                 'TableName' => $tableName,
                 'BillingMode' => 'PAY_PER_REQUEST',
                 'AttributeDefinitions' => [
@@ -53,7 +53,7 @@ class DynamoDbEventStoreTest extends TestCase
                     ['AttributeName' => 'EventStream', 'KeyType' => 'HASH'],
                     ['AttributeName' => 'Version', 'KeyType' => 'RANGE'],
                 ],
-            ]));
+            ]);
         }
 
         return new DynamoDbEventStore(

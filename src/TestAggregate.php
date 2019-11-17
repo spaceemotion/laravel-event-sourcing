@@ -115,7 +115,7 @@ class TestAggregate
      * Returns the list of recorded events on the aggregate.
      * They're grouped by their event class.
      *
-     * @return Event[]|array<string,Event[]>|iterable<Event>
+     * @return Event[][]|array<string,Event[]>
      */
     protected function getRecordedEvents(): array
     {

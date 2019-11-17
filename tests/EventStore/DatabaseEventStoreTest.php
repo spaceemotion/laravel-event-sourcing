@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spaceemotion\LaravelEventSourcing\EventStore\DatabaseEventStore;
