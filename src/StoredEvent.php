@@ -12,9 +12,6 @@ class StoredEvent
     /** @var AggregateRoot */
     public $aggregate;
 
-    /** @var string */
-    public $uuid;
-
     /** @var int */
     public $version;
 }
