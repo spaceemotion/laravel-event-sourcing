@@ -42,6 +42,7 @@ class DynamoDbEventStore implements EventStore
         $response = $this->client->query([
             'TableName' => $this->table,
             'KeyConditionExpression' => 'EventStream = :stream',
+            'ConsistentRead' => true,
             'ExpressionAttributeValues' => [
                 ':stream' => ['S' => (string) $aggregate->getId()],
             ],
