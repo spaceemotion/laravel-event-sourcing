@@ -6,27 +6,35 @@ jobs:
   phpunit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     services:
       dynamodb:
         image: amazon/dynamodb-local
         ports:
           - 8000/tcp
+
     steps:
       - uses: actions/checkout@v1
         with:
           fetch-depth: 1
+
       - name: Validate composer files
         run: composer validate --no-check-all --strict
+
       - name: Install prestissimo for faster installs
         run: composer global require hirak/prestissimo --prefer-dist --no-progress --no-suggest
+
       - name: Install Composer dependencies
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist --optimize-autoloader
+
       - name: Lint project
         run: composer lint
+
       - name: Run tests
         run: composer coverage:clover
         env:
           DYNAMO_DB_HOST: localhost
           DYNAMO_DB_PORT: ${{ job.services.dynamodb.ports[8000] }}
+
       - name: Upload coverage
         run: bash <(curl -s https://codecov.io/bash) -ct ${{ secrets.CODECOV_TOKEN }}
