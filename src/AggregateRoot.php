@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing;
 
 use Closure;
-use Traversable;
 use RuntimeException;
+use Traversable;
 
 /**
  * The aggregate root is the source of truth. It holds the source data,

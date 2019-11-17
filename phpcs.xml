@@ -58,6 +58,11 @@
     <rule ref="SlevomatCodingStandard.ControlStructures.NewWithParentheses" />
     <rule ref="SlevomatCodingStandard.ControlStructures.RequireShortTernaryOperator" />
     <rule ref="SlevomatCodingStandard.Functions.TrailingCommaInCall" />
+    <rule ref="SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses">
+        <properties>
+            <property name="caseSensitive" value="true" />
+        </properties>
+    </rule>
     <rule ref="SlevomatCodingStandard.Namespaces.RequireOneNamespaceInFile" />
     <rule ref="SlevomatCodingStandard.TypeHints.DisallowMixedTypeHint" />
     <rule ref="SlevomatCodingStandard.TypeHints.LongTypeHints" />
