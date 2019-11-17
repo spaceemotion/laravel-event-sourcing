@@ -17,16 +17,23 @@ use function sprintf;
 
 class DynamoDbEventStoreTest extends TestCase
 {
+    /** @var DynamoDbEventStore */
+    protected $store;
+
+    protected function setUp(): void
+    {
+        $this->store = $this->createStore();
+    }
+
     /** @test */
     public function it_properly_stores_and_reads_data(): void
     {
-        $repo = $this->createStore();
         $root = TestAggregateRoot::new();
 
         $root->set(['foo' => 'bar']);
-        $repo->persist($root);
+        $this->store->persist($root);
 
-        $copy = TestAggregateRoot::forId($root->getId())->rebuild($repo);
+        $copy = TestAggregateRoot::forId($root->getId())->rebuild($this->store);
 
         self::assertEquals($root->state, $copy->state);
     }
@@ -34,7 +41,6 @@ class DynamoDbEventStoreTest extends TestCase
     /** @test */
     public function it_properly_handles_bulk_insertion(): void
     {
-        $repo = $this->createStore();
         $root = TestAggregateRoot::new();
 
         // Since the batch size is 25, try to store a few plus a smaller chunk at the end
@@ -42,7 +48,7 @@ class DynamoDbEventStoreTest extends TestCase
             $root->set(['index' => $index]);
         }
 
-        $repo->persist($root);
+        $this->store->persist($root);
 
         // When we reach this point, there was no API error
         $this->addToAssertionCount(1);
