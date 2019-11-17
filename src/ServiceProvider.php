@@ -15,6 +15,8 @@ class ServiceProvider extends LaravelServiceProvider
         $this->publishes([
             __DIR__ . '/../config/laravel-event-sourcing.php' => config_path('laravel-event-sourcing.php'),
         ]);
+
+        $this->loadMigrationsFrom(__DIR__ . '/../migrations');
     }
 
     public function register(): void

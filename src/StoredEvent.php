@@ -25,7 +25,7 @@ final class StoredEvent
         $this->event = $event;
         $this->aggregate = $aggregate;
         $this->version = $version;
-        $this->persistedAt = $persistedAt->toImmutable();
+        $this->persistedAt = $persistedAt;
     }
 
     public function getEvent(): Event
