@@ -6,6 +6,8 @@ namespace Spaceemotion\LaravelEventSourcing;
 
 use Closure;
 use RuntimeException;
+use Spaceemotion\LaravelEventSourcing\EventStore\EventStore;
+use Spaceemotion\LaravelEventSourcing\EventStore\SnapshotEventStore;
 use Traversable;
 
 /**

@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Spaceemotion\LaravelEventSourcing;
+namespace Spaceemotion\LaravelEventSourcing\EventStore;
+
+use Spaceemotion\LaravelEventSourcing\AggregateRoot;
+use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 interface EventStore
 {
