@@ -12,6 +12,8 @@ use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
+use function array_chunk;
+
 class DynamoDbEventStore implements EventStore
 {
     /** @var EventClassMapper */
@@ -60,10 +62,9 @@ class DynamoDbEventStore implements EventStore
 
     public function persist(AggregateRoot $aggregate): void
     {
-        // TODO
-        //      BatchWrite does not work with more than 25 items at a time so we kind of
-        //      need to intelligently group them. Individual items can be as large as
-        //      400KB, but reaching that limit any time soon is extremely unlikely.
+        // BatchWrite does not work with more than 25 items at a time so we kind of
+        // need to intelligently group them. Individual items can be as large as
+        // 400KB, but reaching that limit any time soon is extremely unlikely.
 
         $items = [];
 
@@ -81,10 +82,12 @@ class DynamoDbEventStore implements EventStore
             ];
         }
 
-        $this->client->batchWriteItem([
-            'RequestItems' => [
-                $this->table => $items,
-            ],
-        ]);
+        foreach (array_chunk($items, 25) as $chunk) {
+            $this->client->batchWriteItem([
+                'RequestItems' => [
+                    $this->table => $chunk,
+                ],
+            ]);
+        }
     }
 }

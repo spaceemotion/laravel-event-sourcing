@@ -31,6 +31,23 @@ class DynamoDbEventStoreTest extends TestCase
         self::assertEquals($root->state, $copy->state);
     }
 
+    /** @test */
+    public function it_properly_handles_bulk_insertion(): void
+    {
+        $repo = $this->createStore();
+        $root = TestAggregateRoot::new();
+
+        // Since the batch size is 25, try to store a few plus a smaller chunk at the end
+        foreach (range(0, 64) as $index) {
+            $root->set(['index' => $index]);
+        }
+
+        $repo->persist($root);
+
+        // When we reach this point, there was no API error
+        $this->addToAssertionCount(1);
+    }
+
     protected function createStore(): DynamoDbEventStore
     {
         static $tableName = 'phpunit';
