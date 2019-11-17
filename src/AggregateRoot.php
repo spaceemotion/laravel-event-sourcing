@@ -61,6 +61,26 @@ class AggregateRoot
     }
 
     /**
+     * Replaces the current state with the data from the given snapshot.
+     *
+     * @param  array  $snapshot
+     */
+    protected function applySnapshot(array $snapshot): void
+    {
+        // To be implemented by subclasses
+    }
+
+    /**
+     * Builds an easy to store representation of the current state.
+     *
+     * @return array
+     */
+    public function buildSnapshot(): array
+    {
+        throw new RuntimeException('Snapshots are not implemented by this aggregate.');
+    }
+
+    /**
      * Reconstitutes the current state according to the data
      * from the given event store. This is done by fetching
      * all past events and applying them in order.
@@ -77,6 +97,27 @@ class AggregateRoot
         }
 
         return $this;
+    }
+
+    /**
+     * Reconstitutes the current state based on a snapshot.
+     * Afterwards, the cached state will be updated
+     * by any events that have been stored since.
+     *
+     * @param  SnapshotEventStore  $store
+     * @return $this
+     */
+    public function rebuildFromSnapshot(SnapshotEventStore $store): self
+    {
+        $snapshot = $store->retrieveLastSnapshot($this);
+
+        if ($snapshot !== null) {
+            $this->applySnapshot((array) $snapshot->event);
+
+            $this->version = $snapshot->version;
+        }
+
+        return $this->rebuild($store);
     }
 
     /**
