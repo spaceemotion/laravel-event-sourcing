@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
-use Spaceemotion\LaravelEventSourcing\AggregateId;
+use Illuminate\Support\Carbon;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
@@ -17,12 +17,12 @@ class InMemoryEventStore implements EventStore
     protected $events;
 
     /**
-     * @param  AggregateId  $id
+     * @param  AggregateRoot  $aggregate
      * @param  Event[]  $events
      */
-    public function setEvents(AggregateId $id, array $events): void
+    public function setEvents(AggregateRoot $aggregate, array $events): void
     {
-        $this->events[(string) $id] = $this->buildStoredEvents($events);
+        $this->events[(string) $aggregate->getId()] = $this->buildStoredEvents($aggregate, $events);
     }
 
     /**
@@ -41,25 +41,27 @@ class InMemoryEventStore implements EventStore
      */
     public function persist(AggregateRoot $aggregate): void
     {
-        $events = $this->buildStoredEvents($aggregate->flushEvents());
+        $events = $this->buildStoredEvents($aggregate, $aggregate->flushEvents());
 
         array_push($this->events[(string) $aggregate->getId()], ...$events);
     }
 
     /**
+     * @param  AggregateRoot  $aggregate
      * @param  Event[]|array<int,Event>  $events
      * @return array
      */
-    protected function buildStoredEvents(iterable $events): array
+    protected function buildStoredEvents(AggregateRoot $aggregate, iterable $events): array
     {
         $store = [];
 
         foreach ($events as $version => $event) {
-            $storedEvent = new StoredEvent();
-            $storedEvent->event = $event;
-            $storedEvent->version = (int) $version;
-
-            $store[] = $storedEvent;
+            $store[] = new StoredEvent(
+                $aggregate,
+                $event,
+                (int) $version,
+                Carbon::now(),
+            );
         }
 
         return $store;

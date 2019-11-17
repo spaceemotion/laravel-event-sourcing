@@ -93,9 +93,9 @@ class AggregateRoot
     public function rebuild(EventStore $store): self
     {
         foreach ($store->retrieveAll($this) as $event) {
-            $this->apply($event->event);
+            $this->apply($event->getEvent());
 
-            $this->version = $event->version;
+            $this->version = $event->getVersion();
         }
 
         return $this;
@@ -114,9 +114,9 @@ class AggregateRoot
         $snapshot = $store->retrieveLastSnapshot($this);
 
         if ($snapshot !== null) {
-            $this->applySnapshot((array) $snapshot->event);
+            $this->applySnapshot((array) $snapshot->getEvent());
 
-            $this->version = $snapshot->version;
+            $this->version = $snapshot->getVersion();
         }
 
         return $this->rebuild($store);

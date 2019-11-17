@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing;
 
-use PHPUnit\Framework\Assert;
 use Illuminate\Support\LazyCollection;
+use PHPUnit\Framework\Assert;
 use Spaceemotion\LaravelEventSourcing\EventStore\InMemoryEventStore;
 
 /**
@@ -35,7 +35,7 @@ class TestAggregate
     public function given(Event ...$events): self
     {
         $repository = new InMemoryEventStore();
-        $repository->setEvents($this->aggregate->getId(), $events);
+        $repository->setEvents($this->aggregate, $events);
 
         $this->aggregate->rebuild($repository);
 
