@@ -38,7 +38,7 @@ class DynamoDbEventStoreTest extends TestCase
         $client = new DynamoDbClient([
             'region' => 'eu-central-1',
             'version' => 'latest',
-            'endpoint' => sprintf('http://%s:8000', env('DYNAMO_DB_HOST')),
+            'endpoint' => sprintf('http://%s:%s', env('DYNAMO_DB_HOST'), env('DYNAMO_DB_PORT')),
             'credentials' => [
                 'key' => '',
                 'secret' => '',

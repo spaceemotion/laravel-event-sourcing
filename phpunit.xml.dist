@@ -32,5 +32,6 @@
         <server name="DB_CONNECTION" value="testing"/>
 
         <env name="DYNAMO_DB_HOST" value="localhost" />
+        <env name="DYNAMO_DB_PORT" value="8000" />
     </php>
 </phpunit>
