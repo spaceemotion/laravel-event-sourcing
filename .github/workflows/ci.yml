@@ -5,6 +5,11 @@ on: [push]
 jobs:
   phpunit:
     runs-on: ubuntu-latest
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
     steps:
       - uses: actions/checkout@v1
         with:
@@ -19,5 +24,7 @@ jobs:
         run: composer lint
       - name: Run tests
         run: composer coverage:clover
+        env:
+          DYNAMO_DB_HOST: dynamodb
       - name: Upload coverage
         run: bash <(curl -s https://codecov.io/bash) -ct ${{ secrets.CODECOV_TOKEN }}

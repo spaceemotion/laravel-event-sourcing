@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
-use PHPUnit\Framework\TestCase;
 use Aws\DynamoDb\DynamoDbClient;
-use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
-use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
-use Spaceemotion\LaravelEventSourcing\EventStore\DynamoDbEventStore;
+use PHPUnit\Framework\TestCase;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\ConfigurableEventClassMapper;
+use Spaceemotion\LaravelEventSourcing\EventStore\DynamoDbEventStore;
+use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
+use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
+
+use function env;
+use function sprintf;
 use function in_array;
 
 class DynamoDbEventStoreTest extends TestCase
@@ -35,7 +38,7 @@ class DynamoDbEventStoreTest extends TestCase
         $client = new DynamoDbClient([
             'region' => 'eu-central-1',
             'version' => 'latest',
-            'endpoint' => 'http://localhost:8000',
+            'endpoint' => sprintf('http://%s:8000', env('DYNAMO_DB_HOST')),
         ]);
 
         if (!in_array($tableName, $client->listTables()->get('TableNames'), true)) {

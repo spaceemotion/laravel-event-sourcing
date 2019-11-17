@@ -30,5 +30,7 @@
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>
         <server name="DB_CONNECTION" value="testing"/>
+
+        <env name="DYNAMO_DB_HOST" value="localhost" />
     </php>
 </phpunit>
