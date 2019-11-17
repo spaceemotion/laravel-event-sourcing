@@ -3,21 +3,21 @@ name: CI
 on: [push]
 
 jobs:
-    phpunit:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v1
-              with:
-                fetch-depth: 1
-            - name: Validate composer files
-              run: composer validate --no-check-all --strict
-            - name: Install prestissimo for faster installs
-              run: composer global require hirak/prestissimo --prefer-dist --no-progress --no-suggest
-            - name: Install Composer dependencies
-              run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
-            - name: Lint project
-              run: composer lint
-            - name: Run tests
-              run: composer coverage:clover
-            - name: Upload coverage
-              run: bash <(curl -s https://codecov.io/bash) -ct ${{ secrets.CODECOV_TOKEN }}
+  phpunit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Validate composer files
+        run: composer validate --no-check-all --strict
+      - name: Install prestissimo for faster installs
+        run: composer global require hirak/prestissimo --prefer-dist --no-progress --no-suggest
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
+      - name: Lint project
+        run: composer lint
+      - name: Run tests
+        run: composer coverage:clover
+      - name: Upload coverage
+        run: bash <(curl -s https://codecov.io/bash) -ct ${{ secrets.CODECOV_TOKEN }}
