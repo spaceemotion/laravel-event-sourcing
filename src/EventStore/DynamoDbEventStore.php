@@ -75,7 +75,7 @@ class DynamoDbEventStore implements EventStore
                     'Item' => [
                         'EventStream' => ['S' => (string) $aggregate->getId()],
                         'EventType' => ['S' => $this->classMapper->encode(get_class($event))],
-                        'Version' => ['N' => $version],
+                        'Version' => ['N' => (int) $version],
                         'Payload' => $this->marshaler->marshalValue($event->jsonSerialize()),
                         'CreatedAt' => ['S' => (string) now()],
                     ],
