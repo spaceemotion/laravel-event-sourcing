@@ -52,6 +52,8 @@ class DynamoDbEventStoreTest extends TestCase
     /** @test */
     public function it_properly_handles_bulk_insertion(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $root = TestAggregateRoot::new();
 
         // Since the batch size is 25, try to store a few plus a smaller chunk at the end
@@ -60,9 +62,6 @@ class DynamoDbEventStoreTest extends TestCase
         }
 
         $this->store->persist($root);
-
-        // When we reach this point, there was no API error
-        $this->addToAssertionCount(1);
     }
 
     protected function createStore(): DynamoDbEventStore
