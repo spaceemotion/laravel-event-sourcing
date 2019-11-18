@@ -59,6 +59,22 @@ class DatabaseEventStoreTest extends TestCase
         self::assertStringStartsWith('insert into', $log[0]['query']);
     }
 
+    /** @test */
+    public function it_handles_concurrent_modification(): void
+    {
+        $first = TestAggregateRoot::new();
+        $first->set(['foo' => 'bar']);
+
+        $second = TestAggregateRoot::forId($first->getId());
+        $second->set(['foo' => 'baz']);
+
+        $this->store->persist($first);
+
+        $this->expectExceptionMessage('Integrity constraint violation');
+
+        $this->store->persist($second);
+    }
+
     protected function createStore(): DatabaseEventStore
     {
         return $this->app->make(DatabaseEventStore::class);
