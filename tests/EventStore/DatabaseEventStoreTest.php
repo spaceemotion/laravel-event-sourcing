@@ -14,17 +14,25 @@ class DatabaseEventStoreTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @var DatabaseEventStore */
+    protected $store;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->store = $this->createStore();
+    }
+
     /** @test */
     public function it_properly_stores_and_reads_data(): void
     {
-        $repo = $this->createStore();
-
         $root = TestAggregateRoot::new();
         $root->set(['foo' => 'bar']);
 
-        $repo->persist($root);
+        $this->store->persist($root);
 
-        $copy = TestAggregateRoot::forId($root->getId())->rebuild($repo);
+        $copy = TestAggregateRoot::forId($root->getId())->rebuild($this->store);
 
         self::assertEquals($root->state, $copy->state);
     }
@@ -36,7 +44,6 @@ class DatabaseEventStoreTest extends TestCase
         $connection = $this->app->get(Connection::class);
         $connection->enableQueryLog();
 
-        $repo = $this->createStore();
         $root = TestAggregateRoot::new();
 
         // Since the batch size is 25, try to store a few plus a smaller chunk at the end
@@ -44,7 +51,7 @@ class DatabaseEventStoreTest extends TestCase
             $root->set(['index' => $index]);
         }
 
-        $repo->persist($root);
+        $this->store->persist($root);
 
         $log = $connection->getQueryLog();
 
