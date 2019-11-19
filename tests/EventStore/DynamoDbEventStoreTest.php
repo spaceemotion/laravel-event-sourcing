@@ -50,20 +50,6 @@ class DynamoDbEventStoreTest extends TestCase
         self::assertCount(0, $events);
     }
 
-    /** @test */
-    public function it_properly_handles_bulk_insertion(): void
-    {
-        $this->expectNotToPerformAssertions();
-
-        $root = TestAggregateRoot::new();
-
-        // Since the batch size is 25, try to store a few plus a smaller chunk at the end
-        foreach (range(0, 64) as $index) {
-            $root->set(['index' => $index]);
-        }
-
-        $this->store->persist($root);
-    }
 
     /** @test */
     public function it_handles_concurrent_modification(): void
