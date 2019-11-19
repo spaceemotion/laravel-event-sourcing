@@ -7,6 +7,7 @@ namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spaceemotion\LaravelEventSourcing\EventStore\DatabaseEventStore;
+use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Tests\TestCase;
 
@@ -70,7 +71,7 @@ class DatabaseEventStoreTest extends TestCase
 
         $this->store->persist($first);
 
-        $this->expectExceptionMessage('Integrity constraint violation');
+        $this->expectException(ConcurrentModificationException::class); // 'Integrity constraint violation');
 
         $this->store->persist($second);
     }

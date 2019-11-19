@@ -6,17 +6,21 @@ namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
+use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use stdClass;
 
+use function get_class;
 use function json_decode;
 use function json_encode;
+use function stripos;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -94,7 +98,7 @@ class DatabaseEventStore implements SnapshotEventStore
 
     public function persist(AggregateRoot $aggregate): void
     {
-        $this->newQuery()->insert((new LazyCollection($aggregate->flushEvents()))
+        $events = (new LazyCollection($aggregate->flushEvents()))
             ->map(static function (Event $event, int $version) use ($aggregate): StoredEvent {
                 return new StoredEvent(
                     $aggregate,
@@ -105,8 +109,10 @@ class DatabaseEventStore implements SnapshotEventStore
             })
             ->each(function (StoredEvent $event): void {
                 $this->events->dispatch($event);
-            })
-            ->map(function (StoredEvent $event) use ($aggregate) {
+            });
+
+        try {
+            $this->newQuery()->insert($events->map(function (StoredEvent $event) use ($aggregate) {
                 return [
                     self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
                     self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
@@ -115,8 +121,14 @@ class DatabaseEventStore implements SnapshotEventStore
                     self::FIELD_PAYLOAD => json_encode($event->getEvent(), JSON_THROW_ON_ERROR, 32),
                     self::FIELD_VERSION => $event->getVersion(),
                 ];
-            })
-            ->toArray());
+            })->toArray());
+        } catch (QueryException $e) {
+            if (stripos($e->getMessage(), 'unique constraint failed') === false) {
+                throw $e;
+            }
+
+            throw ConcurrentModificationException::forEvent($events->first(), $e);
+        }
     }
 
     public function persistSnapshot(AggregateRoot $aggregate): void
