@@ -71,7 +71,7 @@ class DatabaseEventStoreTest extends TestCase
 
         $this->store->persist($first);
 
-        $this->expectException(ConcurrentModificationException::class); // 'Integrity constraint violation');
+        $this->expectException(ConcurrentModificationException::class);
 
         $this->store->persist($second);
     }
