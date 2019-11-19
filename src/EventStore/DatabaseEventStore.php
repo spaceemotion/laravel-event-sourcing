@@ -20,7 +20,6 @@ use stdClass;
 use function get_class;
 use function json_decode;
 use function json_encode;
-use function stripos;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -123,7 +122,9 @@ class DatabaseEventStore implements SnapshotEventStore
                 ];
             })->toArray());
         } catch (QueryException $e) {
-            if (stripos($e->getMessage(), 'unique constraint failed') === false) {
+            // Code for 'integrity constraint violation'
+            // https://en.wikipedia.org/wiki/SQLSTATE
+            if ((int) $e->getCode() !== 23000) {
                 throw $e;
             }
 
