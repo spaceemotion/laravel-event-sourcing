@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
 use Aws\DynamoDb\DynamoDbClient;
+use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
 use Illuminate\Support\Carbon;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
+use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
-use function now;
 use function get_class;
+use function now;
 
 class DynamoDbEventStore implements EventStore
 {
@@ -69,22 +71,40 @@ class DynamoDbEventStore implements EventStore
         // Since that's how we detect race conditions we take the
         // performance hit for better data integrity/safety.
 
+        $now = now();
+        $nowString = (string) $now;
+
         foreach ($aggregate->flushEvents() as $version => $event) {
-            $this->client->putItem([
-                'TableName' => $this->table,
-                'Item' => [
-                    'EventStream' => ['S' => (string) $aggregate->getId()],
-                    'EventType' => ['S' => $this->classMapper->encode(get_class($event))],
-                    'Version' => ['N' => (int) $version],
-                    'Payload' => $this->marshaler->marshalValue($event->jsonSerialize()),
-                    'CreatedAt' => ['S' => (string) now()],
-                ],
-                'ConditionExpression' => 'EventStream <> :stream AND Version <> :version',
-                'ExpressionAttributeValues' => [
-                    ':stream' => ['S' => (string) $aggregate->getId()],
-                    ':version' => ['N' => (int) $version],
-                ],
-            ]);
+            try {
+                $this->client->putItem([
+                    'TableName' => $this->table,
+                    'Item' => [
+                        'EventStream' => ['S' => (string) $aggregate->getId()],
+                        'EventType' => ['S' => $this->classMapper->encode(get_class($event))],
+                        'Version' => ['N' => (int) $version],
+                        'Payload' => $this->marshaler->marshalValue($event->jsonSerialize()),
+                        'CreatedAt' => ['S' => $nowString],
+                    ],
+                    'ConditionExpression' => 'EventStream <> :stream AND Version <> :version',
+                    'ExpressionAttributeValues' => [
+                        ':stream' => ['S' => (string) $aggregate->getId()],
+                        ':version' => ['N' => (int) $version],
+                    ],
+                ]);
+            } catch (DynamoDbException $e) {
+                if ($e->getAwsErrorCode() !== 'ConditionalCheckFailedException') {
+                    throw $e;
+                }
+
+                // Throw a new exception right here, since we won't be able to
+                // store any other events anyhow
+                throw ConcurrentModificationException::forEvent(new StoredEvent(
+                    $aggregate,
+                    $event,
+                    $version,
+                    $now,
+                ), $e);
+            }
         }
     }
 }

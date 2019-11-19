@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
+use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 interface EventStore
@@ -27,6 +28,7 @@ interface EventStore
      * an concurrent modification exception will be thrown.
      *
      * @param  AggregateRoot  $aggregate
+     * @throws ConcurrentModificationException
      */
     public function persist(AggregateRoot $aggregate): void;
 }

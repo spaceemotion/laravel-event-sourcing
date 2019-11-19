@@ -8,6 +8,7 @@ use Aws\DynamoDb\DynamoDbClient;
 use PHPUnit\Framework\TestCase;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\ConfigurableEventClassMapper;
 use Spaceemotion\LaravelEventSourcing\EventStore\DynamoDbEventStore;
+use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 
@@ -75,7 +76,7 @@ class DynamoDbEventStoreTest extends TestCase
 
         $this->store->persist($first);
 
-        $this->expectExceptionMessage('conditional request failed');
+        $this->expectException(ConcurrentModificationException::class);
 
         $this->store->persist($second);
     }
