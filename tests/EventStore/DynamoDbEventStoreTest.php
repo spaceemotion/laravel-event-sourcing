@@ -64,6 +64,22 @@ class DynamoDbEventStoreTest extends TestCase
         $this->store->persist($root);
     }
 
+    /** @test */
+    public function it_handles_concurrent_modification(): void
+    {
+        $first = TestAggregateRoot::new();
+        $first->set(['foo' => 'bar']);
+
+        $second = TestAggregateRoot::forId($first->getId());
+        $second->set(['foo' => 'baz']);
+
+        $this->store->persist($first);
+
+        $this->expectExceptionMessage('conditional request failed');
+
+        $this->store->persist($second);
+    }
+
     protected function createStore(): DynamoDbEventStore
     {
         static $tableName = 'phpunit';

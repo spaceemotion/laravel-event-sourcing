@@ -12,7 +12,8 @@ use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
-use function array_chunk;
+use function now;
+use function get_class;
 
 class DynamoDbEventStore implements EventStore
 {
@@ -30,10 +31,10 @@ class DynamoDbEventStore implements EventStore
 
     public function __construct(DynamoDbClient $client, EventClassMapper $classMapper, string $table)
     {
-        $this->classMapper = $classMapper;
-
-        $this->table = $table;
         $this->client = $client;
+        $this->classMapper = $classMapper;
+        $this->table = $table;
+
         $this->marshaler = new Marshaler();
     }
 
@@ -63,30 +64,25 @@ class DynamoDbEventStore implements EventStore
 
     public function persist(AggregateRoot $aggregate): void
     {
-        // BatchWrite does not work with more than 25 items at a time so we kind of
-        // need to intelligently group them. Individual items can be as large as
-        // 400KB, but reaching that limit any time soon is extremely unlikely.
-
-        $items = [];
+        // Instead of using BatchWrite we use single PutItem requests
+        // as they do not seem to work with conditional expressions.
+        // Since that's how we detect race conditions we take the
+        // performance hit for better data integrity/safety.
 
         foreach ($aggregate->flushEvents() as $version => $event) {
-            $items[] = [
-                'PutRequest' => [
-                    'Item' => [
-                        'EventStream' => ['S' => (string) $aggregate->getId()],
-                        'EventType' => ['S' => $this->classMapper->encode(get_class($event))],
-                        'Version' => ['N' => (int) $version],
-                        'Payload' => $this->marshaler->marshalValue($event->jsonSerialize()),
-                        'CreatedAt' => ['S' => (string) now()],
-                    ],
+            $this->client->putItem([
+                'TableName' => $this->table,
+                'Item' => [
+                    'EventStream' => ['S' => (string) $aggregate->getId()],
+                    'EventType' => ['S' => $this->classMapper->encode(get_class($event))],
+                    'Version' => ['N' => (int) $version],
+                    'Payload' => $this->marshaler->marshalValue($event->jsonSerialize()),
+                    'CreatedAt' => ['S' => (string) now()],
                 ],
-            ];
-        }
-
-        foreach (array_chunk($items, 25) as $chunk) {
-            $this->client->batchWriteItem([
-                'RequestItems' => [
-                    $this->table => $chunk,
+                'ConditionExpression' => 'EventStream <> :stream AND Version <> :version',
+                'ExpressionAttributeValues' => [
+                    ':stream' => ['S' => (string) $aggregate->getId()],
+                    ':version' => ['N' => (int) $version],
                 ],
             ]);
         }
