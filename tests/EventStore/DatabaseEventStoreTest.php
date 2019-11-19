@@ -6,8 +6,10 @@ namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
 use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Spaceemotion\LaravelEventSourcing\EventStore\DatabaseEventStore;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
+use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Tests\TestCase;
 
@@ -15,25 +17,17 @@ class DatabaseEventStoreTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @var DatabaseEventStore */
-    protected $store;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->store = $this->createStore();
-    }
-
     /** @test */
     public function it_properly_stores_and_reads_data(): void
     {
+        $store = $this->createStore();
+
         $root = TestAggregateRoot::new();
         $root->set(['foo' => 'bar']);
 
-        $this->store->persist($root);
+        $store->persist($root);
 
-        $copy = TestAggregateRoot::forId($root->getId())->rebuild($this->store);
+        $copy = TestAggregateRoot::forId($root->getId())->rebuild($store);
 
         self::assertEquals($root->state, $copy->state);
     }
@@ -41,6 +35,8 @@ class DatabaseEventStoreTest extends TestCase
     /** @test */
     public function it_properly_handles_bulk_insertion(): void
     {
+        $store = $this->createStore();
+
         /** @var Connection $connection */
         $connection = $this->app->get(Connection::class);
         $connection->enableQueryLog();
@@ -52,7 +48,7 @@ class DatabaseEventStoreTest extends TestCase
             $root->set(['index' => $index]);
         }
 
-        $this->store->persist($root);
+        $store->persist($root);
 
         $log = $connection->getQueryLog();
 
@@ -63,17 +59,19 @@ class DatabaseEventStoreTest extends TestCase
     /** @test */
     public function it_handles_concurrent_modification(): void
     {
+        $store = $this->createStore();
+
         $first = TestAggregateRoot::new();
         $first->set(['foo' => 'bar']);
 
         $second = TestAggregateRoot::forId($first->getId());
         $second->set(['foo' => 'baz']);
 
-        $this->store->persist($first);
+        $store->persist($first);
 
         $this->expectException(ConcurrentModificationException::class);
 
-        $this->store->persist($second);
+        $store->persist($second);
     }
 
     protected function createStore(): DatabaseEventStore
