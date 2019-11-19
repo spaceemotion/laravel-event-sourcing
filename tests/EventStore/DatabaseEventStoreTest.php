@@ -74,6 +74,20 @@ class DatabaseEventStoreTest extends TestCase
         $store->persist($second);
     }
 
+    /** @test */
+    public function it_dispatches_events_during_persistence(): void
+    {
+        $events = Event::fake([StoredEvent::class]);
+
+        $root = TestAggregateRoot::new();
+        $root->set(['foo' => 'bar']);
+        $root->set(['foo' => 'baz']);
+
+        $this->createStore()->persist($root);
+
+        $events->assertDispatchedTimes(StoredEvent::class, 2);
+    }
+
     protected function createStore(): DatabaseEventStore
     {
         return $this->app->make(DatabaseEventStore::class);
