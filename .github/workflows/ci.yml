@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
         with:
-          fetch-depth: 1
+          fetch-depth: 100
 
       - name: Validate composer files
         run: composer validate --no-check-all --strict
