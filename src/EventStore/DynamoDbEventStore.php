@@ -15,7 +15,6 @@ use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 use function get_class;
-use function now;
 
 class DynamoDbEventStore implements EventStore
 {
@@ -71,7 +70,7 @@ class DynamoDbEventStore implements EventStore
         // Since that's how we detect race conditions we take the
         // performance hit for better data integrity/safety.
 
-        $now = now();
+        $now = Carbon::now();
         $nowString = (string) $now;
 
         foreach ($aggregate->flushEvents() as $version => $event) {
