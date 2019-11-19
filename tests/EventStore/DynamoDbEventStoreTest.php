@@ -90,8 +90,8 @@ class DynamoDbEventStoreTest extends TestCase
             'version' => 'latest',
             'endpoint' => sprintf('http://%s:%s', env('DYNAMO_DB_HOST'), env('DYNAMO_DB_PORT')),
             'credentials' => [
-                'key' => '',
-                'secret' => '',
+                'key' => 'local',
+                'secret' => 'local',
             ],
         ]);
 
