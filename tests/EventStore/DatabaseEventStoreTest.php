@@ -92,14 +92,15 @@ class DatabaseEventStoreTest extends TestCase
     public function it_stores_snapshots(): void
     {
         $store = $this->createStore();
-
         $aggregate = TestAggregateRoot::new();
-        $aggregate->set(['foo' => 'bar']);
 
+        $aggregate->set(['val' => 'oldest']);
         $store->persist($aggregate);
 
-        $aggregate->set(['foo' => 'baz']);
+        $aggregate->set(['val' => 'old']);
+        $store->persistSnapshot($aggregate);
 
+        $aggregate->set(['val' => 'new']);
         $store->persistSnapshot($aggregate);
 
         $clone = $aggregate->fresh();

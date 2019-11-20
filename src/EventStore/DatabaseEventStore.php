@@ -80,6 +80,7 @@ class DatabaseEventStore implements SnapshotEventStore
             ->where(self::FIELD_AGGREGATE_ID, $aggregate->getId())
             ->where(self::FIELD_EVENT_TYPE, self::EVENT_TYPE_SNAPSHOT)
             ->latest()
+            ->orderByDesc(self::FIELD_VERSION)
             ->first();
 
         if ($row === null) {
