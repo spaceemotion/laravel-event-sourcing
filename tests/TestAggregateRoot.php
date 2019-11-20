@@ -17,6 +17,16 @@ class TestAggregateRoot extends AggregateRoot
         return static::forId(Uuid::next());
     }
 
+    protected function applySnapshot(array $snapshot): void
+    {
+        $this->state = $snapshot;
+    }
+
+    public function buildSnapshot(): array
+    {
+        return $this->state;
+    }
+
     public function fresh(): self
     {
         return self::forId($this->getId());

@@ -116,7 +116,8 @@ class AggregateRoot
         $snapshot = $store->retrieveLastSnapshot($this);
 
         if ($snapshot !== null) {
-            $this->applySnapshot((array) $snapshot->getEvent());
+            // jsonSerialize() just gives back the payload, there's no conversion happening
+            $this->applySnapshot($snapshot->getEvent()->jsonSerialize());
 
             $this->version = $snapshot->getVersion();
         }

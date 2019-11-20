@@ -88,6 +88,27 @@ class DatabaseEventStoreTest extends TestCase
         $events->assertDispatchedTimes(StoredEvent::class, 2);
     }
 
+    /** @test */
+    public function it_stores_snapshots(): void
+    {
+        $store = $this->createStore();
+
+        $aggregate = TestAggregateRoot::new();
+        $aggregate->set(['foo' => 'bar']);
+
+        $store->persist($aggregate);
+
+        $aggregate->set(['foo' => 'baz']);
+
+        $store->persistSnapshot($aggregate);
+
+        $clone = $aggregate->fresh();
+        $clone->rebuildFromSnapshot($store);
+
+        $this->assertEquals($aggregate->state, $clone->state);
+        $this->assertEquals($aggregate->getCurrentVersion(), $clone->getCurrentVersion());
+    }
+
     protected function createStore(): DatabaseEventStore
     {
         return $this->app->make(DatabaseEventStore::class);

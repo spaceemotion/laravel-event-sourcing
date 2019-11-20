@@ -14,6 +14,7 @@ use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
+use Spaceemotion\LaravelEventSourcing\Snapshot;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use stdClass;
 
@@ -85,10 +86,12 @@ class DatabaseEventStore implements SnapshotEventStore
             return null;
         }
 
+        $payload = json_decode($row->{self::FIELD_PAYLOAD}, true, 32, JSON_THROW_ON_ERROR);
+
         return new StoredEvent(
             $aggregate,
-            json_decode($row->{self::FIELD_PAYLOAD}, true, 32, JSON_THROW_ON_ERROR),
-            $row->{self::FIELD_VERSION},
+            Snapshot::fromJson($payload),
+            (int) $row->{self::FIELD_VERSION},
             Carbon::parse($row->{self::FIELD_CREATED_AT}),
         );
     }
