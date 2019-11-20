@@ -80,9 +80,27 @@ class AggregateRoot
      *
      * @return array
      */
-    public function buildSnapshot(): array
+    protected function buildSnapshot(): array
     {
         throw new RuntimeException('Snapshots are not implemented by this aggregate.');
+    }
+
+    /**
+     * Creates a new, storable snapshot instance.
+     *
+     * This also increases the internal version number so any further
+     * changes don't try to overwrite this "snapshot version".
+     *
+     * @return StoredEvent
+     */
+    public function newSnapshot(): StoredEvent
+    {
+        return new StoredEvent(
+            $this,
+            Snapshot::fromJson($this->buildSnapshot()),
+            $this->version++,
+            Carbon::now(),
+        );
     }
 
     /**
@@ -120,7 +138,8 @@ class AggregateRoot
             // jsonSerialize() just gives back the payload, there's no conversion happening
             $this->applySnapshot($snapshot->getEvent()->jsonSerialize());
 
-            $this->version = $snapshot->getVersion();
+            // increase version to not overwrite the snapshot in future saves
+            $this->version = $snapshot->getVersion() + 1;
         }
 
         return $this->rebuild($store);

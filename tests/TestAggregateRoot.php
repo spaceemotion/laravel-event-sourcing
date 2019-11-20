@@ -22,7 +22,7 @@ class TestAggregateRoot extends AggregateRoot
         $this->state = $snapshot;
     }
 
-    public function buildSnapshot(): array
+    protected function buildSnapshot(): array
     {
         return $this->state;
     }

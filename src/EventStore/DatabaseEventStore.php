@@ -130,13 +130,15 @@ class DatabaseEventStore implements SnapshotEventStore
         // Better to be safe than sorry
         $this->persist($aggregate);
 
+        $snapshot = $aggregate->newSnapshot();
+
         $this->newQuery()->insert([
             self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
-            self::FIELD_CREATED_AT => (string) Carbon::now(),
+            self::FIELD_CREATED_AT => (string) $snapshot->getPersistedAt(),
             self::FIELD_EVENT_TYPE => self::EVENT_TYPE_SNAPSHOT,
             self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
-            self::FIELD_PAYLOAD => json_encode($aggregate->buildSnapshot(), JSON_THROW_ON_ERROR, 32),
-            self::FIELD_VERSION => $aggregate->getCurrentVersion(),
+            self::FIELD_PAYLOAD => json_encode($snapshot->getEvent(), JSON_THROW_ON_ERROR, 32),
+            self::FIELD_VERSION => $snapshot->getVersion(),
         ]);
     }
 

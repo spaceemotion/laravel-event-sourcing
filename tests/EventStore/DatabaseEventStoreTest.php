@@ -107,6 +107,11 @@ class DatabaseEventStoreTest extends TestCase
 
         $this->assertEquals($aggregate->state, $clone->state);
         $this->assertEquals($aggregate->getCurrentVersion(), $clone->getCurrentVersion());
+
+        // The following just tests if we're still able to store stuff
+        // after saving a snapshot (unique constraint violation)
+        $clone->set(['foo' => 'meow']);
+        $store->persist($clone);
     }
 
     protected function createStore(): DatabaseEventStore
