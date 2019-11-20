@@ -17,6 +17,11 @@ class TestAggregateRoot extends AggregateRoot
         return static::forId(Uuid::next());
     }
 
+    public function fresh(): self
+    {
+        return self::forId($this->getId());
+    }
+
     public function set(array $state): self
     {
         return $this->record(new TestEvent($state));

@@ -27,7 +27,7 @@ class DatabaseEventStoreTest extends TestCase
 
         $store->persist($root);
 
-        $copy = TestAggregateRoot::forId($root->getId())->rebuild($store);
+        $copy = $root->fresh()->rebuild($store);
 
         self::assertEquals($root->state, $copy->state);
     }
@@ -64,7 +64,7 @@ class DatabaseEventStoreTest extends TestCase
         $first = TestAggregateRoot::new();
         $first->set(['foo' => 'bar']);
 
-        $second = TestAggregateRoot::forId($first->getId());
+        $second = $first->fresh();
         $second->set(['foo' => 'baz']);
 
         $store->persist($first);

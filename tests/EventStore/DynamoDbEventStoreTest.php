@@ -34,7 +34,7 @@ class DynamoDbEventStoreTest extends TestCase
         $root->set(['foo' => 'bar']);
         $this->store->persist($root);
 
-        $copy = TestAggregateRoot::forId($root->getId())->rebuild($this->store);
+        $copy = $root->fresh()->rebuild($this->store);
 
         self::assertEquals($root->state, $copy->state);
     }
