@@ -13,6 +13,8 @@ use Spaceemotion\LaravelEventSourcing\StoredEvent;
  */
 interface SnapshotEventStore extends EventStore
 {
+    public const EVENT_TYPE_SNAPSHOT = 'snapshot';
+
     /**
      * Returns the last stored snapshot for the given aggregate.
      *
