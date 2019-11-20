@@ -22,7 +22,7 @@ final class Snapshot implements Event
         return $instance;
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->payload;
     }

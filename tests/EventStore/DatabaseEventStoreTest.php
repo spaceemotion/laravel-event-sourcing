@@ -106,8 +106,8 @@ class DatabaseEventStoreTest extends TestCase
         $clone = $aggregate->fresh();
         $clone->rebuildFromSnapshot($store);
 
-        $this->assertEquals($aggregate->state, $clone->state);
-        $this->assertEquals($aggregate->getCurrentVersion(), $clone->getCurrentVersion());
+        self::assertEquals($aggregate->state, $clone->state);
+        self::assertEquals($aggregate->getCurrentVersion(), $clone->getCurrentVersion());
 
         // The following just tests if we're still able to store stuff
         // after saving a snapshot (unique constraint violation)
