@@ -8,11 +8,11 @@ use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
 use Illuminate\Support\Carbon;
-use Spaceemotion\LaravelEventSourcing\Snapshot;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
+use Spaceemotion\LaravelEventSourcing\Snapshot;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 use function get_class;
