@@ -32,6 +32,20 @@ class ConcurrentModificationException extends RuntimeException
 
     /**
      * Creates a new exception instance that happened
+     * while trying to create a snapshot for the
+     * embedded aggregate root instance.
+     *
+     * @param  StoredEvent  $event
+     * @param  Throwable|null  $previous
+     * @return static
+     */
+    public static function forSnapshot(StoredEvent $event, ?Throwable $previous = null): self
+    {
+        return new self('Cannot store snapshot due to concurrent modification', $event, $previous);
+    }
+
+    /**
+     * Creates a new exception instance that happened
      * while trying to save the given event.
      *
      * @param  StoredEvent  $event
