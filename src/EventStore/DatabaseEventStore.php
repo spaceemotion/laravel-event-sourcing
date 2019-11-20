@@ -116,9 +116,7 @@ class DatabaseEventStore implements SnapshotEventStore
                 ];
             })->toArray());
         } catch (QueryException $e) {
-            // Code for 'integrity constraint violation'
-            // https://en.wikipedia.org/wiki/SQLSTATE
-            if ((int) $e->getCode() !== 23000) {
+            if (!$this->wasConcurrentModification($e)) {
                 throw $e;
             }
 
@@ -133,18 +131,33 @@ class DatabaseEventStore implements SnapshotEventStore
 
         $snapshot = $aggregate->newSnapshot();
 
-        $this->newQuery()->insert([
-            self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
-            self::FIELD_CREATED_AT => (string) $snapshot->getPersistedAt(),
-            self::FIELD_EVENT_TYPE => self::EVENT_TYPE_SNAPSHOT,
-            self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
-            self::FIELD_PAYLOAD => json_encode($snapshot->getEvent(), JSON_THROW_ON_ERROR, 32),
-            self::FIELD_VERSION => $snapshot->getVersion(),
-        ]);
+        try {
+            $this->newQuery()->insert([
+                self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
+                self::FIELD_CREATED_AT => (string) $snapshot->getPersistedAt(),
+                self::FIELD_EVENT_TYPE => self::EVENT_TYPE_SNAPSHOT,
+                self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
+                self::FIELD_PAYLOAD => json_encode($snapshot->getEvent(), JSON_THROW_ON_ERROR, 32),
+                self::FIELD_VERSION => $snapshot->getVersion(),
+            ]);
+        } catch (QueryException $e) {
+            if (!$this->wasConcurrentModification($e)) {
+                throw $e;
+            }
+
+            throw ConcurrentModificationException::forSnapshot($snapshot, $e);
+        }
     }
 
     protected function newQuery(): Builder
     {
         return DB::table('stored_events');
+    }
+
+    protected function wasConcurrentModification(QueryException $exception): bool
+    {
+        // Code for 'integrity constraint violation'
+        // https://en.wikipedia.org/wiki/SQLSTATE
+        return (int) $exception->getCode() === 23000;
     }
 }
