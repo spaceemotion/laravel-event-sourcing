@@ -8,6 +8,7 @@ use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
 use Illuminate\Support\Carbon;
+use Spaceemotion\LaravelEventSourcing\Snapshot;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
@@ -16,7 +17,7 @@ use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 use function get_class;
 
-class DynamoDbEventStore implements EventStore
+class DynamoDbEventStore implements SnapshotEventStore
 {
     /** @var EventClassMapper */
     protected $classMapper;
@@ -43,10 +44,13 @@ class DynamoDbEventStore implements EventStore
     {
         $response = $this->client->query([
             'TableName' => $this->table,
-            'KeyConditionExpression' => 'EventStream = :stream',
+            'KeyConditionExpression' => 'EventStream = :stream and Version >= :version',
+            'FilterExpression' => 'EventType <> :type',
             'ConsistentRead' => true,
             'ExpressionAttributeValues' => [
                 ':stream' => ['S' => (string) $aggregate->getId()],
+                ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
+                ':version' => ['N' => $aggregate->getCurrentVersion()],
             ],
         ]);
 
@@ -88,7 +92,7 @@ class DynamoDbEventStore implements EventStore
                     ],
                 ]);
             } catch (DynamoDbException $e) {
-                if ($e->getAwsErrorCode() !== 'ConditionalCheckFailedException') {
+                if (!$this->wasConcurrentModification($e)) {
                     throw $e;
                 }
 
@@ -97,5 +101,80 @@ class DynamoDbEventStore implements EventStore
                 throw ConcurrentModificationException::forEvent($event, $e);
             }
         }
+    }
+
+    /**
+     * Returns the last stored snapshot for the given aggregate.
+     *
+     * @param  AggregateRoot  $aggregate
+     * @return StoredEvent|null
+     */
+    public function retrieveLastSnapshot(AggregateRoot $aggregate): ?StoredEvent
+    {
+        $response = $this->client->query([
+            'TableName' => $this->table,
+            'KeyConditionExpression' => 'EventStream = :stream',
+            'FilterExpression' => 'EventType = :type',
+            'ConsistentRead' => true,
+            'LastEvaluatedKey' => 1,
+            'ScanIndexForward' => false,
+            'ExpressionAttributeValues' => [
+                ':stream' => ['S' => (string) $aggregate->getId()],
+                ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
+            ],
+        ]);
+
+        if ((int) ($response['Count'] ?? 0) < 1) {
+            return null;
+        }
+
+        $record = $response['Items'][0];
+
+        return new StoredEvent(
+            $aggregate,
+            Snapshot::fromJson($this->marshaler->unmarshalValue($record['Payload'])),
+            (int) $record['Version']['N'],
+            Carbon::parse($record['CreatedAt']['S']),
+        );
+    }
+
+    /**
+     * Stores the current state of the given aggregate in a snapshot.
+     * This saves the current version to know which to resume from.
+     *
+     * @param  AggregateRoot  $aggregate
+     */
+    public function persistSnapshot(AggregateRoot $aggregate): void
+    {
+        $snapshot = $aggregate->newSnapshot();
+
+        try {
+            $this->client->putItem([
+                'TableName' => $this->table,
+                'Item' => [
+                    'EventStream' => ['S' => (string) $aggregate->getId()],
+                    'EventType' => ['S' => self::EVENT_TYPE_SNAPSHOT],
+                    'Version' => ['N' => $snapshot->getVersion()],
+                    'Payload' => $this->marshaler->marshalValue($snapshot->getEvent()->jsonSerialize()),
+                    'CreatedAt' => ['S' => (string) $snapshot->getPersistedAt()],
+                ],
+                'ConditionExpression' => 'EventStream <> :stream AND Version <> :version',
+                'ExpressionAttributeValues' => [
+                    ':stream' => ['S' => (string) $aggregate->getId()],
+                    ':version' => ['N' => $snapshot->getVersion()],
+                ],
+            ]);
+        } catch (DynamoDbException $e) {
+            if (!$this->wasConcurrentModification($e)) {
+                throw $e;
+            }
+
+            throw ConcurrentModificationException::forSnapshot($snapshot, $e);
+        }
+    }
+
+    protected function wasConcurrentModification(DynamoDbException $e): bool
+    {
+        return $e->getAwsErrorCode() === 'ConditionalCheckFailedException';
     }
 }

@@ -57,7 +57,7 @@ class DynamoDbEventStoreTest extends TestCase
         $first = TestAggregateRoot::new();
         $first->set(['foo' => 'bar']);
 
-        $second = TestAggregateRoot::forId($first->getId());
+        $second = $first->fresh();
         $second->set(['foo' => 'baz']);
 
         $this->store->persist($first);
@@ -65,6 +65,33 @@ class DynamoDbEventStoreTest extends TestCase
         $this->expectException(ConcurrentModificationException::class);
 
         $this->store->persist($second);
+    }
+
+    /** @test */
+    public function it_stores_snapshots(): void
+    {
+        $store = $this->createStore();
+        $aggregate = TestAggregateRoot::new();
+
+        $aggregate->set(['val' => 'oldest']);
+        $store->persist($aggregate);
+
+        $aggregate->set(['val' => 'old']);
+        $store->persistSnapshot($aggregate);
+
+        $aggregate->set(['val' => 'new']);
+        $store->persistSnapshot($aggregate);
+
+        $clone = $aggregate->fresh();
+        $clone->rebuildFromSnapshot($store);
+
+        $this->assertEquals($aggregate->state, $clone->state);
+        $this->assertEquals($aggregate->getCurrentVersion(), $clone->getCurrentVersion());
+
+        // The following just tests if we're still able to store stuff
+        // after saving a snapshot (unique constraint violation)
+        $clone->set(['foo' => 'meow']);
+        $store->persist($clone);
     }
 
     protected function createStore(): DynamoDbEventStore
