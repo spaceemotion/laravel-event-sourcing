@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing;
 
 use Closure;
+use Illuminate\Support\Carbon;
 use RuntimeException;
 use Spaceemotion\LaravelEventSourcing\EventStore\EventStore;
 use Spaceemotion\LaravelEventSourcing\EventStore\SnapshotEventStore;
@@ -21,7 +22,7 @@ class AggregateRoot
     /** @var array<string,array<string,callable|Closure>> */
     protected $callableCache = [];
 
-    /** @var Event[] */
+    /** @var StoredEvent[] */
     protected $events = [];
 
     /** @var int */
@@ -136,7 +137,14 @@ class AggregateRoot
     {
         $this->apply($event);
 
-        $this->events[$this->version++] = $event;
+        $this->events[$this->version] = new StoredEvent(
+            $this,
+            $event,
+            $this->version,
+            Carbon::now(),
+        );
+
+        $this->version++;
 
         return $this;
     }
@@ -179,7 +187,7 @@ class AggregateRoot
      * Drains the stored event list.
      * (The keys represent the versions when each event got recorded).
      *
-     * @return Event[]|Traversable|array<int,Event>
+     * @return StoredEvent[]|Traversable|array<int,StoredEvent>
      */
     public function flushEvents(): iterable
     {

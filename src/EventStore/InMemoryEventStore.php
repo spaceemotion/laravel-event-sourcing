@@ -41,9 +41,7 @@ class InMemoryEventStore implements EventStore
      */
     public function persist(AggregateRoot $aggregate): void
     {
-        $events = $this->buildStoredEvents($aggregate, $aggregate->flushEvents());
-
-        array_push($this->events[(string) $aggregate->getId()], ...$events);
+        array_push($this->events[(string) $aggregate->getId()], ...$aggregate->flushEvents());
     }
 
     /**

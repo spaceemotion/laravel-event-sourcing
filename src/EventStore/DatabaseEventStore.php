@@ -99,14 +99,6 @@ class DatabaseEventStore implements SnapshotEventStore
     public function persist(AggregateRoot $aggregate): void
     {
         $events = (new LazyCollection($aggregate->flushEvents()))
-            ->map(static function (Event $event, int $version) use ($aggregate): StoredEvent {
-                return new StoredEvent(
-                    $aggregate,
-                    $event,
-                    $version,
-                    Carbon::now(),
-                );
-            })
             ->each(function (StoredEvent $event): void {
                 $this->events->dispatch($event);
             });

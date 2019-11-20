@@ -18,7 +18,7 @@ class TestAggregate
     /** @var AggregateRoot */
     protected $aggregate;
 
-    /** @var Event[]|array<string,Event> */
+    /** @var StoredEvent[]|array<string,StoredEvent> */
     protected $events;
 
     public function __construct(AggregateRoot $aggregate)
@@ -115,12 +115,15 @@ class TestAggregate
      * Returns the list of recorded events on the aggregate.
      * They're grouped by their event class.
      *
-     * @return Event[][]|array<string,Event[]>
+     * @return StoredEvent[][]|array<string,StoredEvent[]>
      */
     protected function getRecordedEvents(): array
     {
         if ($this->events === null) {
             $this->events = (new LazyCollection($this->aggregate->flushEvents()))
+                ->map(static function (StoredEvent $event): Event {
+                    return $event->getEvent();
+                })
                 ->groupBy(static function (Event $event): string {
                     return get_class($event);
                 })

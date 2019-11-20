@@ -70,19 +70,16 @@ class DynamoDbEventStore implements EventStore
         // Since that's how we detect race conditions we take the
         // performance hit for better data integrity/safety.
 
-        $now = Carbon::now();
-        $nowString = (string) $now;
-
         foreach ($aggregate->flushEvents() as $version => $event) {
             try {
                 $this->client->putItem([
                     'TableName' => $this->table,
                     'Item' => [
                         'EventStream' => ['S' => (string) $aggregate->getId()],
-                        'EventType' => ['S' => $this->classMapper->encode(get_class($event))],
+                        'EventType' => ['S' => $this->classMapper->encode(get_class($event->getEvent()))],
                         'Version' => ['N' => (int) $version],
-                        'Payload' => $this->marshaler->marshalValue($event->jsonSerialize()),
-                        'CreatedAt' => ['S' => $nowString],
+                        'Payload' => $this->marshaler->marshalValue($event->getEvent()->jsonSerialize()),
+                        'CreatedAt' => ['S' => (string) $event->getPersistedAt()],
                     ],
                     'ConditionExpression' => 'EventStream <> :stream AND Version <> :version',
                     'ExpressionAttributeValues' => [
@@ -97,12 +94,7 @@ class DynamoDbEventStore implements EventStore
 
                 // Throw a new exception right here, since we won't be able to
                 // store any other events anyhow
-                throw ConcurrentModificationException::forEvent(new StoredEvent(
-                    $aggregate,
-                    $event,
-                    $version,
-                    $now,
-                ), $e);
+                throw ConcurrentModificationException::forEvent($event, $e);
             }
         }
     }
