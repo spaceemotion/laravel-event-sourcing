@@ -135,7 +135,7 @@ class AggregateRoot
     {
         $this->apply($event);
 
-        $this->events[++$this->version] = $event;
+        $this->events[$this->version++] = $event;
 
         return $this;
     }
