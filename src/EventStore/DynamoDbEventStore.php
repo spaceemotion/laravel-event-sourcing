@@ -91,14 +91,14 @@ class DynamoDbEventStore implements SnapshotEventStore
                         ':version' => ['N' => (int) $version],
                     ],
                 ]);
-            } catch (DynamoDbException $e) {
-                if (!$this->wasConcurrentModification($e)) {
-                    throw $e;
+            } catch (DynamoDbException $exception) {
+                if (!$this->wasConcurrentModification($exception)) {
+                    throw $exception;
                 }
 
                 // Throw a new exception right here, since we won't be able to
                 // store any other events anyhow
-                throw ConcurrentModificationException::forEvent($event, $e);
+                throw ConcurrentModificationException::forEvent($event, $exception);
             }
         }
     }
@@ -164,17 +164,17 @@ class DynamoDbEventStore implements SnapshotEventStore
                     ':version' => ['N' => $snapshot->getVersion()],
                 ],
             ]);
-        } catch (DynamoDbException $e) {
-            if (!$this->wasConcurrentModification($e)) {
-                throw $e;
+        } catch (DynamoDbException $exception) {
+            if (!$this->wasConcurrentModification($exception)) {
+                throw $exception;
             }
 
-            throw ConcurrentModificationException::forSnapshot($snapshot, $e);
+            throw ConcurrentModificationException::forSnapshot($snapshot, $exception);
         }
     }
 
-    protected function wasConcurrentModification(DynamoDbException $e): bool
+    protected function wasConcurrentModification(DynamoDbException $exception): bool
     {
-        return $e->getAwsErrorCode() === 'ConditionalCheckFailedException';
+        return $exception->getAwsErrorCode() === 'ConditionalCheckFailedException';
     }
 }

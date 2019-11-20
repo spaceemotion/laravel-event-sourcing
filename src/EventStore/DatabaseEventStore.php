@@ -115,12 +115,12 @@ class DatabaseEventStore implements SnapshotEventStore
                     self::FIELD_VERSION => $event->getVersion(),
                 ];
             })->toArray());
-        } catch (QueryException $e) {
-            if (!$this->wasConcurrentModification($e)) {
-                throw $e;
+        } catch (QueryException $exception) {
+            if (!$this->wasConcurrentModification($exception)) {
+                throw $exception;
             }
 
-            throw ConcurrentModificationException::forEvent($events->first(), $e);
+            throw ConcurrentModificationException::forEvent($events->first(), $exception);
         }
     }
 
@@ -140,12 +140,12 @@ class DatabaseEventStore implements SnapshotEventStore
                 self::FIELD_PAYLOAD => json_encode($snapshot->getEvent(), JSON_THROW_ON_ERROR, 32),
                 self::FIELD_VERSION => $snapshot->getVersion(),
             ]);
-        } catch (QueryException $e) {
-            if (!$this->wasConcurrentModification($e)) {
-                throw $e;
+        } catch (QueryException $exception) {
+            if (!$this->wasConcurrentModification($exception)) {
+                throw $exception;
             }
 
-            throw ConcurrentModificationException::forSnapshot($snapshot, $e);
+            throw ConcurrentModificationException::forSnapshot($snapshot, $exception);
         }
     }
 
