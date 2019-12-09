@@ -14,6 +14,9 @@ class ConfigurableEventClassMapper implements EventClassMapper
     /** @var string[]|array<string, string> */
     protected $fromClassName;
 
+    /**
+     * @param  array<string,string>  $classMap
+     */
     public function __construct(array $classMap = [])
     {
         $this->toClassName = $classMap;

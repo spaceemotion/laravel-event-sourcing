@@ -21,7 +21,7 @@ class ServiceProvider extends LaravelServiceProvider
 
     public function register(): void
     {
-        $this->app->singleton(EventClassMapper::class, static function () {
+        $this->app->singleton(EventClassMapper::class, static function (): EventClassMapper {
             return new ConfigurableEventClassMapper(config('laravel-event-sourcing.event_class', []));
         });
     }

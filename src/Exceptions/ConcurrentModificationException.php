@@ -37,7 +37,7 @@ class ConcurrentModificationException extends RuntimeException
      *
      * @param  StoredEvent  $event
      * @param  Throwable|null  $previous
-     * @return static
+     * @return self
      */
     public static function forSnapshot(StoredEvent $event, ?Throwable $previous = null): self
     {
@@ -50,7 +50,7 @@ class ConcurrentModificationException extends RuntimeException
      *
      * @param  StoredEvent  $event
      * @param  Throwable|null  $previous
-     * @return static
+     * @return self
      */
     public static function forEvent(StoredEvent $event, ?Throwable $previous = null): self
     {

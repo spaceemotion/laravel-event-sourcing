@@ -51,11 +51,11 @@ class DatabaseEventStore implements SnapshotEventStore
 
         return $this->newQuery()
             ->where(self::FIELD_AGGREGATE_ID, $aggregate->getId())
-            ->when($version > 0, static function (Builder $query) use ($version) {
+            ->when($version > 0, static function (Builder $query) use ($version): void {
                 $query->where(self::FIELD_VERSION, '>=', $version);
             })
             ->cursor()
-            ->reject(static function (stdClass $row) {
+            ->reject(static function (stdClass $row): bool {
                 return $row->{self::FIELD_EVENT_TYPE} === self::EVENT_TYPE_SNAPSHOT;
             })
             ->map(function (stdClass $row) use ($aggregate): StoredEvent {
@@ -105,7 +105,7 @@ class DatabaseEventStore implements SnapshotEventStore
             });
 
         try {
-            $this->newQuery()->insert($events->map(function (StoredEvent $event) use ($aggregate) {
+            $this->newQuery()->insert($events->map(function (StoredEvent $event) use ($aggregate): array {
                 return [
                     self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
                     self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),

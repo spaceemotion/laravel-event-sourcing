@@ -12,7 +12,7 @@ interface Event extends JsonSerializable
      * Recreates the event instance from the serialized data.
      *
      * @param  array  $payload
-     * @return static
+     * @return static|Event
      */
     public static function fromJson(array $payload): self;
 }

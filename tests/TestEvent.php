@@ -11,7 +11,7 @@ class TestEvent implements Event
     /** @var array */
     public $attributes;
 
-    public function __construct(array $attributes = [])
+    final public function __construct(array $attributes = [])
     {
         $this->attributes = $attributes;
     }

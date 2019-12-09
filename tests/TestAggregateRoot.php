@@ -40,7 +40,7 @@ class TestAggregateRoot extends AggregateRoot
     protected function getEventHandlers(): array
     {
         return [
-            TestEvent::class => function (TestEvent $event) {
+            TestEvent::class => function (TestEvent $event): void {
                 $this->state = $event->attributes;
             },
         ];

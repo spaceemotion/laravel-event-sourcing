@@ -51,9 +51,15 @@
     <rule ref="SlevomatCodingStandard.Exceptions.DeadCatch" />
     <rule ref="SlevomatCodingStandard.Arrays.TrailingArrayComma" />
     <rule ref="SlevomatCodingStandard.Classes.ModernClassNameReference" />
-    <rule ref="SlevomatCodingStandard.ControlStructures.ControlStructureSpacing">
+    <rule ref="SlevomatCodingStandard.ControlStructures.BlockControlStructureSpacing">
         <properties>
             <property name="linesCountBeforeControlStructure" value="1" />
+            <property name="linesCountAfterControlStructure" value="1" />
+        </properties>
+    </rule>
+    <rule ref="SlevomatCodingStandard.ControlStructures.JumpStatementsSpacing">
+        <properties>
+            <property name="allowSingleLineYieldStacking" value="1" />
             <property name="linesCountAfterControlStructure" value="1" />
         </properties>
     </rule>

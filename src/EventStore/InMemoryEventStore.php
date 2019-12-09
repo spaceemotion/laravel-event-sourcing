@@ -47,7 +47,7 @@ class InMemoryEventStore implements EventStore
     /**
      * @param  AggregateRoot  $aggregate
      * @param  Event[]|array<int,Event>  $events
-     * @return array
+     * @return StoredEvent[]
      */
     protected function buildStoredEvents(AggregateRoot $aggregate, iterable $events): array
     {

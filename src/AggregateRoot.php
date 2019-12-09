@@ -32,6 +32,15 @@ class AggregateRoot
     protected $id;
 
     /**
+     * Locked constructor so we can call methods like "forId"
+     * without having to worry about dependency resolution.
+     */
+    final public function __construct()
+    {
+        // Nothing to do here
+    }
+
+    /**
      * Returns the unique identifier of this aggregate.
      *
      * @return AggregateId

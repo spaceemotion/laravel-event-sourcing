@@ -14,23 +14,29 @@
     "support": {
         "issues": "https://github.com/spaceemotion/laravel-event-sourcing/issues"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/canvural/larastan"
+        }
+    ],
     "require": {
         "ext-json": "*",
-        "php": "^7.3",
+        "php": "^7.4",
         "illuminate/support": "^6.5"
     },
     "require-dev": {
         "aws/aws-sdk-php": "^3.117",
         "escapestudios/symfony2-coding-standard": "^3.9.2",
-        "nunomaduro/larastan": "^0.4.2",
+        "nunomaduro/larastan": "dev-phpstan-0.12",
         "orchestra/testbench": "^4.3",
         "phpmd/phpmd": "^2.7",
-        "phpstan/phpstan-deprecation-rules": "^0.11.2",
-        "phpstan/phpstan-mockery": "^0.11.3",
-        "phpstan/phpstan-phpunit": "^0.11.2",
-        "phpstan/phpstan-strict-rules": "^0.11.1",
+        "phpstan/phpstan-deprecation-rules": "^0.12",
+        "phpstan/phpstan-mockery": "^0.12",
+        "phpstan/phpstan-phpunit": "^0.12",
+        "phpstan/phpstan-strict-rules": "^0.12",
         "phpunit/phpunit": "^8.4",
-        "slevomat/coding-standard": "^5.0"
+        "slevomat/coding-standard": "^6.0"
     },
     "autoload": {
         "psr-4": {

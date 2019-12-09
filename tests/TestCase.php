@@ -15,7 +15,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
         return [ServiceProvider::class];
     }
 
-    protected function getEnvironmentSetUp($app)
+    protected function getEnvironmentSetUp($app): void
     {
         config(['laravel-event-sourcing.event_class' => [
             'test' => TestEvent::class,

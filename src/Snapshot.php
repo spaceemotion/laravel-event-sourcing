@@ -14,7 +14,7 @@ final class Snapshot implements Event
     /** @var array */
     private $payload;
 
-    public static function fromJson(array $payload): Event
+    public static function fromJson(array $payload): self
     {
         $instance = new self();
         $instance->payload = $payload;
