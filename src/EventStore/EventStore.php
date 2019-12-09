@@ -15,7 +15,6 @@ interface EventStore
      * Each implementation can run their own optimizations for this
      * (e.g. only load events starting with the current version).
      *
-     * @param  AggregateRoot  $aggregate
      * @return StoredEvent[]|iterable<StoredEvent>
      */
     public function retrieveAll(AggregateRoot $aggregate): iterable;
@@ -27,7 +26,6 @@ interface EventStore
      * In case another aggregate instance already saved its events
      * an concurrent modification exception will be thrown.
      *
-     * @param  AggregateRoot  $aggregate
      * @throws ConcurrentModificationException
      */
     public function persist(AggregateRoot $aggregate): void;

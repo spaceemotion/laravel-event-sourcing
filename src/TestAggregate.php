@@ -28,7 +28,6 @@ class TestAggregate
     /**
      * Rebuilds the given aggregate using the provided list of events.
      *
-     * @param  Event  ...$events
      * @return $this
      */
     public function given(Event ...$events): self
@@ -45,7 +44,6 @@ class TestAggregate
      * Calls the given callback and stores the recorded events
      * afterwards for later use by the assertion methods.
      *
-     * @param  callable  $callback
      * @return $this
      */
     public function when(callable $callback): self
@@ -70,7 +68,6 @@ class TestAggregate
     /**
      * Checks if the given event type has not been recorded during the when() call.
      *
-     * @param  string  $eventClass
      * @return $this
      */
     public function assertNotRecorded(string $eventClass): self
@@ -85,7 +82,6 @@ class TestAggregate
      * and invokes the optional callback with the recorded instance so
      * some further testing can be done with the event itself.
      *
-     * @param  Event  $event
      *  @return $this
      */
     public function assertRecordedInstance(Event $event): self
@@ -100,7 +96,6 @@ class TestAggregate
      * Since the same event type could have been recorded multiple types
      * this only checks for an occurrence of at least once.
      *
-     * @param  string  $event
      * @return $this
      */
     public function assertRecorded(string $event): self

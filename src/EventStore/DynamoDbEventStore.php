@@ -19,16 +19,12 @@ use function get_class;
 
 class DynamoDbEventStore implements SnapshotEventStore
 {
-    /** @var EventClassMapper */
     protected EventClassMapper $classMapper;
 
-    /** @var Marshaler */
     protected Marshaler $marshaler;
 
-    /** @var DynamoDbClient */
     protected DynamoDbClient $client;
 
-    /** @var string */
     protected string $table;
 
     public function __construct(DynamoDbClient $client, EventClassMapper $classMapper, string $table)
@@ -105,9 +101,6 @@ class DynamoDbEventStore implements SnapshotEventStore
 
     /**
      * Returns the last stored snapshot for the given aggregate.
-     *
-     * @param  AggregateRoot  $aggregate
-     * @return StoredEvent|null
      */
     public function retrieveLastSnapshot(AggregateRoot $aggregate): ?StoredEvent
     {
@@ -141,8 +134,6 @@ class DynamoDbEventStore implements SnapshotEventStore
     /**
      * Stores the current state of the given aggregate in a snapshot.
      * This saves the current version to know which to resume from.
-     *
-     * @param  AggregateRoot  $aggregate
      */
     public function persistSnapshot(AggregateRoot $aggregate): void
     {

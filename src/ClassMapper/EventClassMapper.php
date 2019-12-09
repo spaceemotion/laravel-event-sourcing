@@ -13,17 +13,11 @@ interface EventClassMapper
 {
     /**
      * Returns the public event class name.
-     *
-     * @param  string  $class
-     * @return string
      */
     public function encode(string $class): string;
 
     /**
      * Returns the internal event class name.
-     *
-     * @param  string  $name
-     * @return string
      */
     public function decode(string $name): string;
 }

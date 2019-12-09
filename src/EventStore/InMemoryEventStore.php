@@ -17,7 +17,6 @@ class InMemoryEventStore implements EventStore
     protected array $events;
 
     /**
-     * @param  AggregateRoot  $aggregate
      * @param  Event[]  $events
      */
     public function setEvents(AggregateRoot $aggregate, array $events): void
@@ -26,7 +25,6 @@ class InMemoryEventStore implements EventStore
     }
 
     /**
-     * @param  AggregateRoot  $aggregate
      * @return StoredEvent[]|iterable<StoredEvent>
      */
     public function retrieveAll(AggregateRoot $aggregate): iterable
@@ -36,8 +34,6 @@ class InMemoryEventStore implements EventStore
 
     /**
      * Stores all recorded events of the given aggregate.
-     *
-     * @param  AggregateRoot  $aggregate
      */
     public function persist(AggregateRoot $aggregate): void
     {
@@ -45,7 +41,6 @@ class InMemoryEventStore implements EventStore
     }
 
     /**
-     * @param  AggregateRoot  $aggregate
      * @param  Event[]|array<int,Event>  $events
      * @return StoredEvent[]
      */

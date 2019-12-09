@@ -10,7 +10,6 @@ use Throwable;
 
 class ConcurrentModificationException extends RuntimeException
 {
-    /** @var StoredEvent */
     protected StoredEvent $event;
 
     public function __construct(string $message, StoredEvent $event, ?Throwable $previous = null)
@@ -22,8 +21,6 @@ class ConcurrentModificationException extends RuntimeException
 
     /**
      * Returns the event that could not be saved.
-     *
-     * @return StoredEvent
      */
     public function getStoredEvent(): StoredEvent
     {
@@ -34,10 +31,6 @@ class ConcurrentModificationException extends RuntimeException
      * Creates a new exception instance that happened
      * while trying to create a snapshot for the
      * embedded aggregate root instance.
-     *
-     * @param  StoredEvent  $event
-     * @param  Throwable|null  $previous
-     * @return self
      */
     public static function forSnapshot(StoredEvent $event, ?Throwable $previous = null): self
     {
@@ -47,10 +40,6 @@ class ConcurrentModificationException extends RuntimeException
     /**
      * Creates a new exception instance that happened
      * while trying to save the given event.
-     *
-     * @param  StoredEvent  $event
-     * @param  Throwable|null  $previous
-     * @return self
      */
     public static function forEvent(StoredEvent $event, ?Throwable $previous = null): self
     {

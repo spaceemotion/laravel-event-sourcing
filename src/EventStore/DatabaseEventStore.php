@@ -33,10 +33,8 @@ class DatabaseEventStore implements SnapshotEventStore
     public const FIELD_PAYLOAD = 'payload';
     public const FIELD_VERSION = 'version';
 
-    /** @var EventClassMapper */
     protected EventClassMapper $classMapper;
 
-    /** @var Dispatcher */
     protected Dispatcher $events;
 
     public function __construct(EventClassMapper $classMapper, Dispatcher $events)

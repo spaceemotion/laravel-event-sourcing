@@ -25,10 +25,8 @@ class AggregateRoot
     /** @var StoredEvent[] */
     protected array $events = [];
 
-    /** @var int */
     protected int $version = 0;
 
-    /** @var AggregateId */
     protected AggregateId $id;
 
     /**
@@ -42,8 +40,6 @@ class AggregateRoot
 
     /**
      * Returns the unique identifier of this aggregate.
-     *
-     * @return AggregateId
      */
     public function getId(): AggregateId
     {
@@ -55,8 +51,6 @@ class AggregateRoot
      *
      * This is used to track its number of changes
      * and helps detecting concurrency problems.
-     *
-     * @return int
      */
     public function getCurrentVersion(): int
     {
@@ -99,8 +93,6 @@ class AggregateRoot
      *
      * This also increases the internal version number so any further
      * changes don't try to overwrite this "snapshot version".
-     *
-     * @return StoredEvent
      */
     public function newSnapshot(): StoredEvent
     {
@@ -117,7 +109,6 @@ class AggregateRoot
      * from the given event store. This is done by fetching
      * all past events and applying them in order.
      *
-     * @param  EventStore  $store
      * @return $this
      */
     public function rebuild(EventStore $store): self
@@ -136,7 +127,6 @@ class AggregateRoot
      * Afterwards, the cached state will be updated
      * by any events that have been stored since.
      *
-     * @param  SnapshotEventStore  $store
      * @return $this
      */
     public function rebuildFromSnapshot(SnapshotEventStore $store): self
@@ -158,7 +148,6 @@ class AggregateRoot
      * Stores the given event in local state and
      * increases the current version number.
      *
-     * @param  Event  $event
      * @return $this
      */
     public function record(Event $event): self
@@ -180,8 +169,6 @@ class AggregateRoot
     /**
      * Calls the registered handler method (if any) for the given event.
      * This is used to modify the local state.
-     *
-     * @param  Event  $event
      */
     protected function apply(Event $event): void
     {
@@ -198,9 +185,6 @@ class AggregateRoot
      * Determines the callable that's associated with the given event.
      * For performance reasons, this uses a per-instance cache
      * based on the result of getEventHandlers().
-     *
-     * @param  Event  $event
-     * @return callable|null
      */
     protected function getHandlingCallable(Event $event): ?callable
     {
@@ -228,7 +212,6 @@ class AggregateRoot
      * Creates a new instance for the given aggregate ID.
      * This does not load any existing data yet.
      *
-     * @param  AggregateId  $id
      * @return static
      */
     public static function forId(AggregateId $id): self
