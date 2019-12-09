@@ -9,10 +9,10 @@ use function array_flip;
 class ConfigurableEventClassMapper implements EventClassMapper
 {
     /** @var string[]|array<string, string> */
-    protected $toClassName;
+    protected array $toClassName;
 
     /** @var string[]|array<string, string> */
-    protected $fromClassName;
+    protected array $fromClassName;
 
     /**
      * @param  array<string,string>  $classMap

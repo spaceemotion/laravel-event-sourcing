@@ -8,17 +8,10 @@ use Illuminate\Support\Carbon;
 
 final class StoredEvent
 {
-    /** @var AggregateRoot */
-    private $aggregate;
-
-    /** @var Event */
-    private $event;
-
-    /** @var int */
-    private $version;
-
-    /** @var Carbon */
-    private $persistedAt;
+    private AggregateRoot $aggregate;
+    private Event $event;
+    private int $version;
+    private Carbon $persistedAt;
 
     public function __construct(AggregateRoot $aggregate, Event $event, int $version, Carbon $persistedAt)
     {

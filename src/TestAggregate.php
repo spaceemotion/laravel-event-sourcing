@@ -15,11 +15,10 @@ use Spaceemotion\LaravelEventSourcing\EventStore\InMemoryEventStore;
  */
 class TestAggregate
 {
-    /** @var AggregateRoot */
-    protected $aggregate;
+    protected AggregateRoot $aggregate;
 
-    /** @var StoredEvent[]|array<string,StoredEvent> */
-    protected $events;
+    /** @var StoredEvent[]|array<string,StoredEvent>|null */
+    protected ?array $events = null;
 
     public function __construct(AggregateRoot $aggregate)
     {
@@ -121,12 +120,8 @@ class TestAggregate
     {
         if ($this->events === null) {
             $this->events = (new LazyCollection($this->aggregate->flushEvents()))
-                ->map(static function (StoredEvent $event): Event {
-                    return $event->getEvent();
-                })
-                ->groupBy(static function (Event $event): string {
-                    return get_class($event);
-                })
+                ->map(static fn(StoredEvent $event): Event => $event->getEvent())
+                ->groupBy(static fn(Event $event): string => get_class($event))
                 ->toArray();
         }
 

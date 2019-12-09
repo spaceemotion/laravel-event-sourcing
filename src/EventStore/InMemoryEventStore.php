@@ -14,7 +14,7 @@ use function array_push;
 class InMemoryEventStore implements EventStore
 {
     /** @var StoredEvent[][]|array<string|StoredEvent[]> */
-    protected $events;
+    protected array $events;
 
     /**
      * @param  AggregateRoot  $aggregate

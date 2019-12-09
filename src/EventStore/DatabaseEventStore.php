@@ -34,10 +34,10 @@ class DatabaseEventStore implements SnapshotEventStore
     public const FIELD_VERSION = 'version';
 
     /** @var EventClassMapper */
-    protected $classMapper;
+    protected EventClassMapper $classMapper;
 
     /** @var Dispatcher */
-    protected $events;
+    protected Dispatcher $events;
 
     public function __construct(EventClassMapper $classMapper, Dispatcher $events)
     {
@@ -55,9 +55,7 @@ class DatabaseEventStore implements SnapshotEventStore
                 $query->where(self::FIELD_VERSION, '>=', $version);
             })
             ->cursor()
-            ->reject(static function (stdClass $row): bool {
-                return $row->{self::FIELD_EVENT_TYPE} === self::EVENT_TYPE_SNAPSHOT;
-            })
+            ->reject(static fn(stdClass $row): bool => $row->{self::FIELD_EVENT_TYPE} === self::EVENT_TYPE_SNAPSHOT)
             ->map(function (stdClass $row) use ($aggregate): StoredEvent {
                 $payload = json_decode($row->{self::FIELD_PAYLOAD}, true, 32, JSON_THROW_ON_ERROR);
 
@@ -105,16 +103,14 @@ class DatabaseEventStore implements SnapshotEventStore
             });
 
         try {
-            $this->newQuery()->insert($events->map(function (StoredEvent $event) use ($aggregate): array {
-                return [
-                    self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
-                    self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
-                    self::FIELD_EVENT_TYPE => $this->classMapper->encode(get_class($event->getEvent())),
-                    self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
-                    self::FIELD_PAYLOAD => json_encode($event->getEvent(), JSON_THROW_ON_ERROR, 32),
-                    self::FIELD_VERSION => $event->getVersion(),
-                ];
-            })->toArray());
+            $this->newQuery()->insert($events->map(fn(StoredEvent $event): array => [
+                self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
+                self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
+                self::FIELD_EVENT_TYPE => $this->classMapper->encode(get_class($event->getEvent())),
+                self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
+                self::FIELD_PAYLOAD => json_encode($event->getEvent(), JSON_THROW_ON_ERROR, 32),
+                self::FIELD_VERSION => $event->getVersion(),
+            ])->toArray());
         } catch (QueryException $exception) {
             if (!$this->wasConcurrentModification($exception)) {
                 throw $exception;
@@ -158,6 +154,6 @@ class DatabaseEventStore implements SnapshotEventStore
     {
         // Code for 'integrity constraint violation'
         // https://en.wikipedia.org/wiki/SQLSTATE
-        return (int) $exception->getCode() === 23000;
+        return (int) $exception->getCode() === 23_000;
     }
 }

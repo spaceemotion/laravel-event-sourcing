@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests;
 
+use PHPUnit\Framework\TestCase;
+
 use function array_push;
 
-class AggregateRootTest extends \PHPUnit\Framework\TestCase
+class AggregateRootTest extends TestCase
 {
     /** @test */
     public function it_records_events(): void

@@ -20,16 +20,16 @@ use function get_class;
 class AggregateRoot
 {
     /** @var array<string,array<string,callable|Closure>> */
-    protected $callableCache = [];
+    protected array $callableCache = [];
 
     /** @var StoredEvent[] */
-    protected $events = [];
+    protected array $events = [];
 
     /** @var int */
-    protected $version = 0;
+    protected int $version = 0;
 
     /** @var AggregateId */
-    protected $id;
+    protected AggregateId $id;
 
     /**
      * Locked constructor so we can call methods like "forId"

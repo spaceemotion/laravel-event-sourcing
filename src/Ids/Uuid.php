@@ -10,7 +10,7 @@ use Spaceemotion\LaravelEventSourcing\AggregateId;
 final class Uuid implements AggregateId
 {
     /** @var string */
-    private $id;
+    private string $id;
 
     private function __construct(string $id)
     {

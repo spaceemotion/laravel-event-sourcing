@@ -19,7 +19,7 @@ use function sprintf;
 class DynamoDbEventStoreTest extends TestCase
 {
     /** @var DynamoDbEventStore */
-    protected $store;
+    protected DynamoDbEventStore $store;
 
     protected function setUp(): void
     {

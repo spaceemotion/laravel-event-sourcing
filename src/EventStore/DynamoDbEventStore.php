@@ -20,16 +20,16 @@ use function get_class;
 class DynamoDbEventStore implements SnapshotEventStore
 {
     /** @var EventClassMapper */
-    protected $classMapper;
+    protected EventClassMapper $classMapper;
 
     /** @var Marshaler */
-    protected $marshaler;
+    protected Marshaler $marshaler;
 
     /** @var DynamoDbClient */
-    protected $client;
+    protected DynamoDbClient $client;
 
     /** @var string */
-    protected $table;
+    protected string $table;
 
     public function __construct(DynamoDbClient $client, EventClassMapper $classMapper, string $table)
     {

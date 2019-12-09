@@ -11,8 +11,7 @@ namespace Spaceemotion\LaravelEventSourcing;
  */
 final class Snapshot implements Event
 {
-    /** @var array */
-    private $payload;
+    private array $payload;
 
     public static function fromJson(array $payload): self
     {

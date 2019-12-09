@@ -11,7 +11,7 @@ use Throwable;
 class ConcurrentModificationException extends RuntimeException
 {
     /** @var StoredEvent */
-    protected $event;
+    protected StoredEvent $event;
 
     public function __construct(string $message, StoredEvent $event, ?Throwable $previous = null)
     {

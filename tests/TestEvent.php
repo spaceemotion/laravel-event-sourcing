@@ -9,7 +9,7 @@ use Spaceemotion\LaravelEventSourcing\Event;
 class TestEvent implements Event
 {
     /** @var array */
-    public $attributes;
+    public array $attributes;
 
     final public function __construct(array $attributes = [])
     {
