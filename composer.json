@@ -51,6 +51,8 @@
     "suggest": {
         "aws/aws-sdk-php": "Allows using DynamoDB as event store"
     },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "scripts": {
         "coverage:clover": "phpdbg -qrr vendor/phpunit/phpunit/phpunit --coverage-clover build/coverage.xml",
         "coverage:html": "phpdbg -qrr vendor/phpunit/phpunit/phpunit --coverage-html build/coverage-report",
