@@ -209,6 +209,20 @@ class AggregateRoot
     }
 
     /**
+     * Creates a shallow copy of this aggregate that only holds
+     * the original AggregateId. No events will be copied over
+     * (neither past nor any recorded during its life cycle).
+     *
+     * @return $this
+     */
+    public function fresh(): self
+    {
+        // TODO should we also copy the version?
+
+        return self::forId($this->getId());
+    }
+
+    /**
      * Creates a new instance for the given aggregate ID.
      * This does not load any existing data yet.
      *

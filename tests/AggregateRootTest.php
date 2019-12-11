@@ -28,7 +28,7 @@ class AggregateRootTest extends TestCase
     public function it_allows_shallow_copies(): void
     {
         $original = TestAggregateRoot::new();
-        $copy = TestAggregateRoot::forId($original->getId());
+        $copy = $original->fresh();
 
         self::assertEquals($original->getId(), $copy->getId());
     }
