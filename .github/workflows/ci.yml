@@ -38,7 +38,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install prestissimo for faster installs
-        run: composer global require hirak/prestissimo --prefer-dist --no-progress --no-suggest
+        run: composer global require hirak/prestissimo --no-ansi --no-interaction --prefer-dist --no-progress --no-suggest
 
       - name: Install Composer dependencies
         run: composer install --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist --optimize-autoloader
