@@ -18,6 +18,11 @@ jobs:
         with:
           fetch-depth: 100
 
+      - uses: shivammathur/setup-php@v1
+        with:
+          php-version: '7.4'
+          coverage: none
+
       - name: Validate composer files
         run: composer validate --no-check-all --strict
 
