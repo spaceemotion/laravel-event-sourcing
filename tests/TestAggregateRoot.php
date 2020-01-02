@@ -16,21 +16,33 @@ class TestAggregateRoot extends AggregateRoot
         return static::forId(Uuid::next());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function applySnapshot(array $snapshot): void
     {
         $this->state = $snapshot;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function buildSnapshot(): array
     {
         return $this->state;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function set(array $state): self
     {
         return $this->record(new TestEvent($state));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getEventHandlers(): array
     {
         return [

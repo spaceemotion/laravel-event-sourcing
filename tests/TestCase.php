@@ -10,11 +10,18 @@ use function config;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {
+    /**
+     * {@inheritDoc}
+     * @return string[]
+     */
     protected function getPackageProviders($app): array
     {
         return [ServiceProvider::class];
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getEnvironmentSetUp($app): void
     {
         config(['laravel-event-sourcing.event_class' => [

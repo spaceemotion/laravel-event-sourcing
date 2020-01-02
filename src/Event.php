@@ -11,6 +11,7 @@ interface Event extends JsonSerializable
     /**
      * Recreates the event instance from the serialized data.
      *
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint
      * @param  array  $payload
      * @return static|Event
      */

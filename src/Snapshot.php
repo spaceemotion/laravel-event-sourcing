@@ -13,6 +13,9 @@ final class Snapshot implements Event
 {
     private array $payload;
 
+    /**
+     * {@inheritDoc}
+     */
     public static function fromJson(array $payload): self
     {
         $instance = new self();
@@ -21,6 +24,9 @@ final class Snapshot implements Event
         return $instance;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function jsonSerialize(): array
     {
         return $this->payload;

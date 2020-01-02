@@ -43,6 +43,9 @@ class DatabaseEventStore implements SnapshotEventStore
         $this->events = $events;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function retrieveAll(AggregateRoot $aggregate): iterable
     {
         $version = $aggregate->getCurrentVersion();

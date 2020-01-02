@@ -36,6 +36,9 @@ class DynamoDbEventStore implements SnapshotEventStore
         $this->marshaler = new Marshaler();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function retrieveAll(AggregateRoot $aggregate): iterable
     {
         $response = $this->client->query([

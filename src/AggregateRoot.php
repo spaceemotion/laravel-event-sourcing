@@ -71,6 +71,7 @@ class AggregateRoot
     /**
      * Replaces the current state with the data from the given snapshot.
      *
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint
      * @param  array  $snapshot
      */
     protected function applySnapshot(array $snapshot): void
@@ -81,6 +82,7 @@ class AggregateRoot
     /**
      * Builds an easy to store representation of the current state.
      *
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ReturnTypeHint
      * @return array
      */
     protected function buildSnapshot(): array
