@@ -213,7 +213,7 @@ class AggregateRoot
      * the original AggregateId. No events will be copied over
      * (neither past nor any recorded during its life cycle).
      *
-     * @return $this
+     * @return static
      */
     public function fresh(): self
     {
