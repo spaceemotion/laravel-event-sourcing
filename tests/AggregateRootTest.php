@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests;
 
+use LogicException;
 use PHPUnit\Framework\TestCase;
+
+use Spaceemotion\LaravelEventSourcing\EventStore\InMemoryEventStore;
 
 use function array_push;
 
@@ -31,5 +34,17 @@ class AggregateRootTest extends TestCase
         $copy = $original->fresh();
 
         self::assertEquals($original->getId(), $copy->getId());
+    }
+
+    /** @test */
+    public function it_only_allows_rebuilding_fresh_copies(): void
+    {
+        $root = TestAggregateRoot::new();
+        $root->set([123]);
+
+        $store = new InMemoryEventStore();
+
+        $this->expectException(LogicException::class);
+        $root->rebuild($store);
     }
 }

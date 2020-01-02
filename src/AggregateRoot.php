@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing;
 
 use Closure;
+use LogicException;
 use Illuminate\Support\Carbon;
 use RuntimeException;
 use Spaceemotion\LaravelEventSourcing\EventStore\EventStore;
@@ -115,6 +116,10 @@ class AggregateRoot
      */
     public function rebuild(EventStore $store): self
     {
+        if (count($this->events) > 0) {
+            throw new LogicException('Only fresh instances can be rebuilt.');
+        }
+
         foreach ($store->retrieveAll($this) as $event) {
             $this->apply($event->getEvent());
 
@@ -219,8 +224,6 @@ class AggregateRoot
      */
     public function fresh(): self
     {
-        // TODO should we also copy the version?
-
         return self::forId($this->getId());
     }
 
