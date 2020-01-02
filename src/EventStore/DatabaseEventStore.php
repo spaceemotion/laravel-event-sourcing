@@ -67,7 +67,7 @@ class DatabaseEventStore implements SnapshotEventStore
                     $aggregate,
                     $base::fromJson($payload),
                     (int) $row->{self::FIELD_VERSION},
-                    Carbon::parse($row->{self::FIELD_CREATED_AT}),
+                    Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable(),
                 );
             });
     }
@@ -92,7 +92,7 @@ class DatabaseEventStore implements SnapshotEventStore
             $aggregate,
             Snapshot::fromJson($payload),
             (int) $row->{self::FIELD_VERSION},
-            Carbon::parse($row->{self::FIELD_CREATED_AT}),
+            Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable(),
         );
     }
 

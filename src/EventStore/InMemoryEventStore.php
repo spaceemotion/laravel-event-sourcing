@@ -53,7 +53,7 @@ class InMemoryEventStore implements EventStore
                 $aggregate,
                 $event,
                 (int) $version,
-                Carbon::now(),
+                Carbon::now()->toImmutable(),
             );
         }
 

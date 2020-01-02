@@ -61,7 +61,7 @@ class DynamoDbEventStore implements SnapshotEventStore
                 $aggregate,
                 $class::fromJson($this->marshaler->unmarshalValue($item['Payload'])),
                 (int) $item['Version']['N'],
-                Carbon::parse($item['CreatedAt']['S']),
+                Carbon::parse($item['CreatedAt']['S'])->toImmutable(),
             );
         }
     }
@@ -130,7 +130,7 @@ class DynamoDbEventStore implements SnapshotEventStore
             $aggregate,
             Snapshot::fromJson($this->marshaler->unmarshalValue($record['Payload'])),
             (int) $record['Version']['N'],
-            Carbon::parse($record['CreatedAt']['S']),
+            Carbon::parse($record['CreatedAt']['S'])->toImmutable(),
         );
     }
 

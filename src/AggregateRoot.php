@@ -102,7 +102,7 @@ class AggregateRoot
             $this,
             Snapshot::fromJson($this->buildSnapshot()),
             $this->version++,
-            Carbon::now(),
+            Carbon::now()->toImmutable(),
         );
     }
 
@@ -160,7 +160,7 @@ class AggregateRoot
             $this,
             $event,
             $this->version,
-            Carbon::now(),
+            Carbon::now()->toImmutable(),
         );
 
         $this->version++;

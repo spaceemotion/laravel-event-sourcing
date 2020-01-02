@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing;
 
-use Illuminate\Support\Carbon;
+use Carbon\CarbonImmutable;
 
 final class StoredEvent
 {
     private AggregateRoot $aggregate;
     private Event $event;
     private int $version;
-    private Carbon $persistedAt;
+    private CarbonImmutable $persistedAt;
 
-    public function __construct(AggregateRoot $aggregate, Event $event, int $version, Carbon $persistedAt)
+    public function __construct(AggregateRoot $aggregate, Event $event, int $version, CarbonImmutable $persistedAt)
     {
         $this->event = $event;
         $this->aggregate = $aggregate;
@@ -36,7 +36,7 @@ final class StoredEvent
         return $this->version;
     }
 
-    public function getPersistedAt(): Carbon
+    public function getPersistedAt(): CarbonImmutable
     {
         return $this->persistedAt;
     }
