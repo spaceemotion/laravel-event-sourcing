@@ -123,7 +123,7 @@ class AggregateRoot
         foreach ($store->retrieveAll($this) as $event) {
             $this->apply($event->getEvent());
 
-            $this->version = $event->getVersion();
+            $this->version = $event->getVersion() + 1;
         }
 
         return $this;

@@ -47,4 +47,18 @@ class AggregateRootTest extends TestCase
         $this->expectException(LogicException::class);
         $root->rebuild($store);
     }
+
+    /** @test */
+    public function it_keeps_the_version_correct_across_loads_and_saves(): void
+    {
+        $root = TestAggregateRoot::new();
+        $root->set([1]);
+        $root->set([2]);
+
+        $store = new InMemoryEventStore();
+        $store->persist($root);
+
+        $clone = $root->fresh()->rebuild($store);
+        self::assertEquals($root->getCurrentVersion(), $clone->getCurrentVersion());
+    }
 }
