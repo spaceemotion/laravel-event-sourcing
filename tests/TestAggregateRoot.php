@@ -9,7 +9,7 @@ use Spaceemotion\LaravelEventSourcing\Ids\Uuid;
 
 class TestAggregateRoot extends AggregateRoot
 {
-    public array $state;
+    public array $state = [];
 
     public static function new(): self
     {
