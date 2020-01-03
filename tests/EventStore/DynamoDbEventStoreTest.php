@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
+use Carbon\Carbon;
 use Aws\DynamoDb\DynamoDbClient;
 use Illuminate\Support\Facades\Event;
+use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 use Spaceemotion\LaravelEventSourcing\EventStore\DynamoDbEventStore;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
@@ -68,6 +70,8 @@ class DynamoDbEventStoreTest extends TestCase
     /** @test */
     public function it_handles_concurrent_modification(): void
     {
+        Carbon::setTestNow('2020-01-01');
+
         $first = TestAggregateRoot::new();
         $first->set(['foo' => 'bar']);
 
@@ -76,9 +80,17 @@ class DynamoDbEventStoreTest extends TestCase
 
         $this->store->persist($first);
 
-        $this->expectException(ConcurrentModificationException::class);
-
-        $this->store->persist($second);
+        try {
+            $this->store->persist($second);
+            self::fail('Expected ' . ConcurrentModificationException::class);
+        } catch (ConcurrentModificationException $e) {
+            self::assertEquals(new StoredEvent(
+                $second,
+                new TestEvent(['foo' => 'baz']),
+                0,
+                Carbon::getTestNow()->toImmutable()
+            ), $e->getStoredEvent());
+        }
     }
 
     /** @test */

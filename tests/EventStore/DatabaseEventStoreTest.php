@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
+use Carbon\Carbon;
 use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 use Spaceemotion\LaravelEventSourcing\EventStore\DatabaseEventStore;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
@@ -59,6 +61,8 @@ class DatabaseEventStoreTest extends TestCase
     /** @test */
     public function it_handles_concurrent_modification(): void
     {
+        Carbon::setTestNow('2020-01-01');
+
         $store = $this->createStore();
 
         $first = TestAggregateRoot::new();
@@ -69,9 +73,17 @@ class DatabaseEventStoreTest extends TestCase
 
         $store->persist($first);
 
-        $this->expectException(ConcurrentModificationException::class);
-
-        $store->persist($second);
+        try {
+            $store->persist($second);
+            self::fail('Expected ' . ConcurrentModificationException::class);
+        } catch (ConcurrentModificationException $e) {
+            self::assertEquals(new StoredEvent(
+                $second,
+                new TestEvent(['foo' => 'baz']),
+                0,
+                Carbon::getTestNow()->toImmutable()
+           ), $e->getStoredEvent());
+        }
     }
 
     /** @test */
