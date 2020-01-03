@@ -123,7 +123,6 @@ class DynamoDbEventStore implements SnapshotEventStore
             'KeyConditionExpression' => 'EventStream = :stream',
             'FilterExpression' => 'EventType = :type',
             'ConsistentRead' => true,
-            'LastEvaluatedKey' => 1,
             'ScanIndexForward' => false,
             'ExpressionAttributeValues' => [
                 ':stream' => ['S' => (string) $aggregate->getId()],

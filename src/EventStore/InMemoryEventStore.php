@@ -9,8 +9,6 @@ use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
-use function array_push;
-
 class InMemoryEventStore implements EventStore
 {
     /** @var StoredEvent[][]|array<string|StoredEvent[]> */

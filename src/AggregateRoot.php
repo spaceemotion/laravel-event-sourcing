@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing;
 
 use Closure;
-use LogicException;
 use Illuminate\Support\Carbon;
+use LogicException;
 use RuntimeException;
 use Spaceemotion\LaravelEventSourcing\EventStore\EventStore;
 use Spaceemotion\LaravelEventSourcing\EventStore\SnapshotEventStore;

@@ -6,7 +6,6 @@ namespace Spaceemotion\LaravelEventSourcing\Tests;
 
 use LogicException;
 use PHPUnit\Framework\TestCase;
-
 use Spaceemotion\LaravelEventSourcing\EventStore\InMemoryEventStore;
 
 use function array_push;
