@@ -11,7 +11,7 @@ use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 class InMemoryEventStore implements EventStore
 {
-    /** @var StoredEvent[][]|array<string|StoredEvent[]> */
+    /** @var array<string,iterable<StoredEvent>> */
     protected array $events = [];
 
     /**
