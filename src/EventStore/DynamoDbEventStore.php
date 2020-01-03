@@ -7,6 +7,7 @@ namespace Spaceemotion\LaravelEventSourcing\EventStore;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Carbon;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
@@ -19,6 +20,8 @@ use function get_class;
 
 class DynamoDbEventStore implements SnapshotEventStore
 {
+    protected Dispatcher $events;
+
     protected EventClassMapper $classMapper;
 
     protected Marshaler $marshaler;
@@ -27,10 +30,16 @@ class DynamoDbEventStore implements SnapshotEventStore
 
     protected string $table;
 
-    public function __construct(DynamoDbClient $client, EventClassMapper $classMapper, string $table)
-    {
-        $this->client = $client;
+    public function __construct(
+        Dispatcher $events,
+        EventClassMapper $classMapper,
+        DynamoDbClient $client,
+        string $table
+    ) {
+        $this->events = $events;
         $this->classMapper = $classMapper;
+
+        $this->client = $client;
         $this->table = $table;
 
         $this->marshaler = new Marshaler();
@@ -74,6 +83,8 @@ class DynamoDbEventStore implements SnapshotEventStore
         // performance hit for better data integrity/safety.
 
         foreach ($aggregate->flushEvents() as $version => $event) {
+            $this->events->dispatch($event);
+
             try {
                 $this->client->putItem([
                     'TableName' => $this->table,

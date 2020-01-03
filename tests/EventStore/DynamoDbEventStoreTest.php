@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
 use Aws\DynamoDb\DynamoDbClient;
-use PHPUnit\Framework\TestCase;
-use Spaceemotion\LaravelEventSourcing\ClassMapper\ConfigurableEventClassMapper;
+use Illuminate\Support\Facades\Event;
 use Spaceemotion\LaravelEventSourcing\EventStore\DynamoDbEventStore;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
+use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
-use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
+use Spaceemotion\LaravelEventSourcing\Tests\TestCase;
 
 use function env;
 use function in_array;
@@ -22,6 +22,8 @@ class DynamoDbEventStoreTest extends TestCase
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->store = $this->createStore();
     }
 
@@ -49,6 +51,19 @@ class DynamoDbEventStoreTest extends TestCase
         self::assertCount(0, $events);
     }
 
+    /** @test */
+    public function it_dispatches_events_during_persistence(): void
+    {
+        $events = Event::fake([StoredEvent::class]);
+
+        $root = TestAggregateRoot::new();
+        $root->set(['foo' => 'bar']);
+        $root->set(['foo' => 'baz']);
+
+        $this->createStore()->persist($root);
+
+        $events->assertDispatchedTimes(StoredEvent::class, 2);
+    }
 
     /** @test */
     public function it_handles_concurrent_modification(): void
@@ -122,12 +137,10 @@ class DynamoDbEventStoreTest extends TestCase
             ]);
         }
 
-        return new DynamoDbEventStore(
-            $client,
-            new ConfigurableEventClassMapper([
-                'test' => TestEvent::class,
-            ]),
-            $tableName,
-        );
+        $this->app->instance(DynamoDbClient::class, $client);
+
+        return $this->app->make(DynamoDbEventStore::class, [
+            'table' => $tableName,
+        ]);
     }
 }
