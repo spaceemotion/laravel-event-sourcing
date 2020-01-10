@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
-use Carbon\Carbon;
 use Aws\DynamoDb\DynamoDbClient;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
-use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 use Spaceemotion\LaravelEventSourcing\EventStore\DynamoDbEventStore;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Tests\TestCase;
+use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 
 use function env;
 use function in_array;
@@ -20,24 +20,16 @@ use function sprintf;
 
 class DynamoDbEventStoreTest extends TestCase
 {
-    protected DynamoDbEventStore $store;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->store = $this->createStore();
-    }
-
     /** @test */
     public function it_properly_stores_and_reads_data(): void
     {
+        $store = $this->createStore();
         $root = TestAggregateRoot::new();
 
         $root->set(['foo' => 'bar']);
-        $this->store->persist($root);
+        $store->persist($root);
 
-        $copy = $root->fresh()->rebuild($this->store);
+        $copy = $root->fresh()->rebuild($store);
 
         self::assertEquals($root->state, $copy->state);
     }
@@ -45,7 +37,7 @@ class DynamoDbEventStoreTest extends TestCase
     /** @test */
     public function it_loads_nothing_for_empty_aggregate_roots(): void
     {
-        $root = TestAggregateRoot::new()->rebuild($this->store);
+        $root = TestAggregateRoot::new()->rebuild($this->createStore());
         $events = [];
 
         array_push($events, ...$root->flushEvents());
@@ -56,7 +48,7 @@ class DynamoDbEventStoreTest extends TestCase
     /** @test */
     public function it_dispatches_events_during_persistence(): void
     {
-        $events = Event::fake([StoredEvent::class]);
+        $events = Event::fake([StoredEvent::class, TestEvent::class]);
 
         $root = TestAggregateRoot::new();
         $root->set(['foo' => 'bar']);
@@ -65,6 +57,7 @@ class DynamoDbEventStoreTest extends TestCase
         $this->createStore()->persist($root);
 
         $events->assertDispatchedTimes(StoredEvent::class, 2);
+        $events->assertDispatchedTimes(TestEvent::class, 2);
     }
 
     /** @test */
@@ -72,25 +65,37 @@ class DynamoDbEventStoreTest extends TestCase
     {
         Carbon::setTestNow('2020-01-01');
 
+        $store = $this->createStore();
+
         $first = TestAggregateRoot::new();
         $first->set(['foo' => 'bar']);
 
         $second = $first->fresh();
         $second->set(['foo' => 'baz']);
 
-        $this->store->persist($first);
-
-        try {
-            $this->store->persist($second);
-            self::fail('Expected ' . ConcurrentModificationException::class);
-        } catch (ConcurrentModificationException $e) {
-            self::assertEquals(new StoredEvent(
-                $second,
-                new TestEvent(['foo' => 'baz']),
-                0,
-                Carbon::getTestNow()->toImmutable()
-            ), $e->getStoredEvent());
+        for ($i = 0; $i < 3; $i++) {
+            $first->set(['idx' => $i]);
+            $store->persist($first);
         }
+
+        for ($i = 0; $i < 5; $i++) {
+            $first->set(['idx' => $i]);
+
+            try {
+                $store->persist($second);
+                self::fail('Expected ' . ConcurrentModificationException::class);
+            } catch (ConcurrentModificationException $e) {
+                self::assertEquals(new StoredEvent(
+                    $second,
+                    new TestEvent(['foo' => 'baz']),
+                    $second->getCurrentVersion() - 1,
+                    Carbon::now()->toImmutable(),
+                ), $e->getStoredEvent());
+            }
+        }
+
+        $this->expectException(ConcurrentModificationException::class);
+        $store->persist($second);
     }
 
     /** @test */

@@ -24,5 +24,7 @@ class ServiceProvider extends LaravelServiceProvider
         $this->app->singleton(EventClassMapper::class, static fn(): EventClassMapper => (
             new ConfigurableEventClassMapper(config('laravel-event-sourcing.event_class', []))
         ));
+
+        $this->app->singleton(EventDispatcher::class);
     }
 }

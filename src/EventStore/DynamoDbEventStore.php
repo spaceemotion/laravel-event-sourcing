@@ -7,11 +7,11 @@ namespace Spaceemotion\LaravelEventSourcing\EventStore;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
-use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Carbon;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
+use Spaceemotion\LaravelEventSourcing\EventDispatcher;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\Snapshot;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
@@ -20,7 +20,7 @@ use function get_class;
 
 class DynamoDbEventStore implements SnapshotEventStore
 {
-    protected Dispatcher $events;
+    protected EventDispatcher $events;
 
     protected EventClassMapper $classMapper;
 
@@ -31,7 +31,7 @@ class DynamoDbEventStore implements SnapshotEventStore
     protected string $table;
 
     public function __construct(
-        Dispatcher $events,
+        EventDispatcher $events,
         EventClassMapper $classMapper,
         DynamoDbClient $client,
         string $table

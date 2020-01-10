@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
-use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
@@ -13,6 +12,7 @@ use Illuminate\Support\LazyCollection;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
+use Spaceemotion\LaravelEventSourcing\EventDispatcher;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\Snapshot;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
@@ -35,9 +35,9 @@ class DatabaseEventStore implements SnapshotEventStore
 
     protected EventClassMapper $classMapper;
 
-    protected Dispatcher $events;
+    protected EventDispatcher $events;
 
-    public function __construct(EventClassMapper $classMapper, Dispatcher $events)
+    public function __construct(EventClassMapper $classMapper, EventDispatcher $events)
     {
         $this->classMapper = $classMapper;
         $this->events = $events;

@@ -8,12 +8,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
-use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 use Spaceemotion\LaravelEventSourcing\EventStore\DatabaseEventStore;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Tests\TestCase;
+use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 
 class DatabaseEventStoreTest extends TestCase
 {
@@ -81,15 +81,15 @@ class DatabaseEventStoreTest extends TestCase
                 $second,
                 new TestEvent(['foo' => 'baz']),
                 0,
-                Carbon::getTestNow()->toImmutable()
-           ), $e->getStoredEvent());
+                Carbon::now()->toImmutable(),
+            ), $e->getStoredEvent());
         }
     }
 
     /** @test */
     public function it_dispatches_events_during_persistence(): void
     {
-        $events = Event::fake([StoredEvent::class]);
+        $events = Event::fake([StoredEvent::class, TestEvent::class]);
 
         $root = TestAggregateRoot::new();
         $root->set(['foo' => 'bar']);
@@ -98,6 +98,7 @@ class DatabaseEventStoreTest extends TestCase
         $this->createStore()->persist($root);
 
         $events->assertDispatchedTimes(StoredEvent::class, 2);
+        $events->assertDispatchedTimes(TestEvent::class, 2);
     }
 
     /** @test */
