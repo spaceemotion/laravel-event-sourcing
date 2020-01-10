@@ -20,6 +20,9 @@ class TestProjector extends Projector
         $this->handlers = $handlers;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getEventHandlers(): array
     {
         return $this->handlers;

@@ -12,7 +12,7 @@ abstract class Projector
     public function register(Dispatcher $events): void
     {
         foreach ($this->getEventHandlers() as $event => $handler) {
-            $events->listen($event, $handler);
+            $events->listen((string) $event, $handler);
         }
     }
 
