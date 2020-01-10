@@ -27,6 +27,16 @@ class AggregateRootTest extends TestCase
     }
 
     /** @test */
+    public function it_only_applies_known_events(): void
+    {
+        $root = TestAggregateRoot::new();
+        $root->record(new TestSubEvent(['fuzz' => 'buzz']));
+
+        self::assertCount(1, $root->flushEvents());
+        self::assertEquals([], $root->state);
+    }
+
+    /** @test */
     public function it_allows_shallow_copies(): void
     {
         $original = TestAggregateRoot::new();
