@@ -95,7 +95,7 @@ class DynamoDbEventStore implements SnapshotEventStore
                         'Payload' => $this->marshaler->marshalValue($event->getEvent()->jsonSerialize()),
                         'CreatedAt' => ['S' => (string) $event->getPersistedAt()],
                     ],
-                    'ConditionExpression' => 'EventStream <> :stream AND Version <> :version',
+                    'ConditionExpression' => 'EventStream <> :stream AND (Version <> :version OR Version < :version)',
                     'ExpressionAttributeValues' => [
                         ':stream' => ['S' => (string) $aggregate->getId()],
                         ':version' => ['N' => (int) $version],
@@ -162,7 +162,7 @@ class DynamoDbEventStore implements SnapshotEventStore
                     'Payload' => $this->marshaler->marshalValue($snapshot->getEvent()->jsonSerialize()),
                     'CreatedAt' => ['S' => (string) $snapshot->getPersistedAt()],
                 ],
-                'ConditionExpression' => 'EventStream <> :stream AND Version <> :version',
+                'ConditionExpression' => 'EventStream <> :stream AND (Version <> :version OR Version < :version)',
                 'ExpressionAttributeValues' => [
                     ':stream' => ['S' => (string) $aggregate->getId()],
                     ':version' => ['N' => $snapshot->getVersion()],
