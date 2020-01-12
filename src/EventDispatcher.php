@@ -21,6 +21,6 @@ class EventDispatcher
         $this->events->dispatch($event);
 
         // Then let individual listeners handle the change on a per-event basis
-        $this->events->dispatch(get_class($event->getEvent()), $event);
+        $this->events->dispatch(get_class($event->getEvent()), [$event, $event->getEvent()]);
     }
 }

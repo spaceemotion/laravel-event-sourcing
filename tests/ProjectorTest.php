@@ -25,8 +25,9 @@ class ProjectorTest extends TestCase
             StoredEvent::class => static function () use (&$handled): void {
                 $handled = true;
             },
-            TestEvent::class => static function (StoredEvent $instance) use ($event): void {
+            TestEvent::class => static function (StoredEvent $instance, TestEvent $evt) use ($event): void {
                 self::assertEquals($event, $instance);
+                self::assertEquals($event->getEvent(), $evt);
             },
         ]);
 
