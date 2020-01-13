@@ -31,6 +31,8 @@ class ProjectorTest extends TestCase
             },
         ]);
 
+        self::assertEquals([StoredEvent::class, TestEvent::class], $projector->getProjectedEvents());
+
         // Register the projector
         $dispatcher = new \Illuminate\Events\Dispatcher();
         $projector->register($dispatcher);
