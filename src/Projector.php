@@ -11,8 +11,6 @@ abstract class Projector
 {
     /**
      * Registers all event handlers with the given event dispatcher.
-     *
-     * @param  Dispatcher  $events
      */
     public function register(Dispatcher $events): void
     {
@@ -25,7 +23,7 @@ abstract class Projector
      * Returns an array of all event classes that are
      * being handled by this projector.
      *
-     * @return array
+     * @return string[]
      */
     public function getProjectedEvents(): array
     {
