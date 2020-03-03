@@ -9,11 +9,11 @@ use Spaceemotion\LaravelEventSourcing\Projector;
 
 class TestProjector extends Projector
 {
-    /** @var callable[]|array<string,callable|Closure> */
+    /** @var Closure[]|array<string,Closure> */
     public array $handlers;
 
     /**
-     * @param  callable[]|array<string,callable|Closure>  $handlers
+     * @param  Closure[]|array<string,Closure>  $handlers
      */
     public function __construct(array $handlers)
     {

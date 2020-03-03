@@ -39,7 +39,7 @@ abstract class Projector
      * - For individual (unpacked) events the real instance
      *   is being provided as the second argument.
      *
-     * @return callable[]|array<string,callable|Closure>
+     * @return Closure[]|array<string,Closure>
      */
     protected function getEventHandlers(): array
     {
