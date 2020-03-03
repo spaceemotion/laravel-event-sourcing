@@ -8,7 +8,16 @@
 [![CodeCov Status](https://codecov.io/gh/spaceemotion/laravel-event-sourcing/branch/master/graph/badge.svg)](https://codecov.io/gh/spaceemotion/laravel-event-sourcing)
 
 Opiniated event sourcing framework for Laravel optimized for speed and type safety.
-<!--This is where the description goes. Try to limit it to a paragraph or two. Consider adding a small, easy to understand example.-->
+
+#### Functionality
+- Uses generators for fetching and storing events for a small memory footprint
+- Optimistic concurrent modification detection using event versioning
+- Snapshot support for faster aggregate root load times
+
+#### Developer Experience
+- Has type extensive hints for great IDE (and static analysis) support
+- Integrated support for SQL and NoSQL event stores
+- Flexible, but not bloated framework
 
 ## Installation
 
@@ -20,13 +29,15 @@ composer require spaceemotion/laravel-event-sourcing
 
 ## Usage
 
-``` php
-```
+```php
+<?php
+function store(Request $request, EventStore $store)
+{
+    $list = TodoListAggregate::forId(Uuid::new());
+    $list->setTitle($request->get('title'));
 
-### Testing
-
-``` bash
-composer test
+    $store->persist($list);
+}
 ```
 
 ### Changelog
