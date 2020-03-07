@@ -65,7 +65,7 @@ class DatabaseEventStore implements SnapshotEventStore
 
                 return new StoredEvent(
                     $aggregate,
-                    $base::fromJson($payload),
+                    $base::deserialize($payload),
                     (int) $row->{self::FIELD_VERSION},
                     Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable(),
                 );
@@ -90,7 +90,7 @@ class DatabaseEventStore implements SnapshotEventStore
 
         return new StoredEvent(
             $aggregate,
-            Snapshot::fromJson($payload),
+            Snapshot::deserialize($payload),
             (int) $row->{self::FIELD_VERSION},
             Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable(),
         );
@@ -106,7 +106,7 @@ class DatabaseEventStore implements SnapshotEventStore
             self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
             self::FIELD_EVENT_TYPE => $this->classMapper->encode(get_class($event->getEvent())),
             self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
-            self::FIELD_PAYLOAD => json_encode($event->getEvent(), JSON_THROW_ON_ERROR, 32),
+            self::FIELD_PAYLOAD => json_encode($event->getEvent()->serialize(), JSON_THROW_ON_ERROR, 32),
             self::FIELD_VERSION => $event->getVersion(),
         ]);
 
@@ -137,7 +137,7 @@ class DatabaseEventStore implements SnapshotEventStore
                 self::FIELD_CREATED_AT => (string) $snapshot->getPersistedAt(),
                 self::FIELD_EVENT_TYPE => self::EVENT_TYPE_SNAPSHOT,
                 self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
-                self::FIELD_PAYLOAD => json_encode($snapshot->getEvent(), JSON_THROW_ON_ERROR, 32),
+                self::FIELD_PAYLOAD => json_encode($snapshot->getEvent()->serialize(), JSON_THROW_ON_ERROR, 32),
                 self::FIELD_VERSION => $snapshot->getVersion(),
             ]);
         } catch (QueryException $exception) {

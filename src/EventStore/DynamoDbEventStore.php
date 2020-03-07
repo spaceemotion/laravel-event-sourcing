@@ -68,7 +68,7 @@ class DynamoDbEventStore implements SnapshotEventStore
 
             yield new StoredEvent(
                 $aggregate,
-                $class::fromJson($this->marshaler->unmarshalValue($item['Payload'])),
+                $class::deserialize($this->marshaler->unmarshalValue($item['Payload'])),
                 (int) $item['Version']['N'],
                 Carbon::parse($item['CreatedAt']['S'])->toImmutable(),
             );
@@ -90,7 +90,7 @@ class DynamoDbEventStore implements SnapshotEventStore
                         'EventStream' => ['S' => (string) $aggregate->getId()],
                         'EventType' => ['S' => $this->classMapper->encode(get_class($event->getEvent()))],
                         'Version' => ['N' => (int) $version],
-                        'Payload' => $this->marshaler->marshalValue($event->getEvent()->jsonSerialize()),
+                        'Payload' => $this->marshaler->marshalValue($event->getEvent()->serialize()),
                         'CreatedAt' => ['S' => (string) $event->getPersistedAt()],
                     ],
                     'ConditionExpression' => 'EventStream <> :stream AND (Version <> :version OR Version < :version)',
@@ -140,7 +140,7 @@ class DynamoDbEventStore implements SnapshotEventStore
 
         return new StoredEvent(
             $aggregate,
-            Snapshot::fromJson($this->marshaler->unmarshalValue($record['Payload'])),
+            Snapshot::deserialize($this->marshaler->unmarshalValue($record['Payload'])),
             (int) $record['Version']['N'],
             Carbon::parse($record['CreatedAt']['S'])->toImmutable(),
         );
@@ -161,7 +161,7 @@ class DynamoDbEventStore implements SnapshotEventStore
                     'EventStream' => ['S' => (string) $aggregate->getId()],
                     'EventType' => ['S' => self::EVENT_TYPE_SNAPSHOT],
                     'Version' => ['N' => $snapshot->getVersion()],
-                    'Payload' => $this->marshaler->marshalValue($snapshot->getEvent()->jsonSerialize()),
+                    'Payload' => $this->marshaler->marshalValue($snapshot->getEvent()->serialize()),
                     'CreatedAt' => ['S' => (string) $snapshot->getPersistedAt()],
                 ],
                 'ConditionExpression' => 'EventStream <> :stream AND (Version <> :version OR Version < :version)',

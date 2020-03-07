@@ -101,7 +101,7 @@ class AggregateRoot
     {
         return new StoredEvent(
             $this,
-            Snapshot::fromJson($this->buildSnapshot()),
+            Snapshot::deserialize($this->buildSnapshot()),
             $this->version++,
             Carbon::now()->toImmutable(),
         );
@@ -141,8 +141,8 @@ class AggregateRoot
         $snapshot = $store->retrieveLastSnapshot($this);
 
         if ($snapshot !== null) {
-            // jsonSerialize() just gives back the payload, there's no conversion happening
-            $this->applySnapshot($snapshot->getEvent()->jsonSerialize());
+            // serialize() just gives back the payload, there's no conversion happening
+            $this->applySnapshot($snapshot->getEvent()->serialize());
 
             // increase version to not overwrite the snapshot in future saves
             $this->version = $snapshot->getVersion() + 1;

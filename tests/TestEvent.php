@@ -22,7 +22,7 @@ class TestEvent implements Event
     /**
      * {@inheritDoc}
      */
-    public static function fromJson(array $payload): Event
+    public static function deserialize(array $payload): Event
     {
         return new static($payload);
     }
@@ -30,7 +30,7 @@ class TestEvent implements Event
     /**
      * {@inheritDoc}
      */
-    public function jsonSerialize(): array
+    public function serialize(): array
     {
         return $this->attributes;
     }

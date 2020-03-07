@@ -16,7 +16,7 @@ final class Snapshot implements Event
     /**
      * {@inheritDoc}
      */
-    public static function fromJson(array $payload): self
+    public static function deserialize(array $payload): self
     {
         $instance = new self();
         $instance->payload = $payload;
@@ -27,7 +27,7 @@ final class Snapshot implements Event
     /**
      * {@inheritDoc}
      */
-    public function jsonSerialize(): array
+    public function serialize(): array
     {
         return $this->payload;
     }
