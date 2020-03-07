@@ -98,20 +98,20 @@ class DatabaseEventStore implements SnapshotEventStore
 
     public function persist(AggregateRoot $aggregate): void
     {
-        $events = (new LazyCollection($aggregate->flushEvents()))
-            ->each(function (StoredEvent $event): void {
-                $this->events->dispatch($event);
-            });
+        $events = new LazyCollection($aggregate->flushEvents());
+
+        // Build and execute a bulk query
+        $rows = $events->map(fn (StoredEvent $event) => [
+            self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
+            self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
+            self::FIELD_EVENT_TYPE => $this->classMapper->encode(get_class($event->getEvent())),
+            self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
+            self::FIELD_PAYLOAD => json_encode($event->getEvent(), JSON_THROW_ON_ERROR, 32),
+            self::FIELD_VERSION => $event->getVersion(),
+        ]);
 
         try {
-            $this->newQuery()->insert($events->map(fn(StoredEvent $event): array => [
-                self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
-                self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
-                self::FIELD_EVENT_TYPE => $this->classMapper->encode(get_class($event->getEvent())),
-                self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
-                self::FIELD_PAYLOAD => json_encode($event->getEvent(), JSON_THROW_ON_ERROR, 32),
-                self::FIELD_VERSION => $event->getVersion(),
-            ])->toArray());
+            $this->newQuery()->insert($rows->toArray());
         } catch (QueryException $exception) {
             if (!$this->wasConcurrentModification($exception)) {
                 throw $exception;
@@ -119,6 +119,9 @@ class DatabaseEventStore implements SnapshotEventStore
 
             throw ConcurrentModificationException::forEvent($events->first(), $exception);
         }
+
+        // Update projections after storing the data
+        $events->each(fn (StoredEvent $event) => $this->events->dispatch($event));
     }
 
     public function persistSnapshot(AggregateRoot $aggregate): void

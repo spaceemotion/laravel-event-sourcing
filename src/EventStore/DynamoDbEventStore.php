@@ -83,8 +83,6 @@ class DynamoDbEventStore implements SnapshotEventStore
         // performance hit for better data integrity/safety.
 
         foreach ($aggregate->flushEvents() as $version => $event) {
-            $this->events->dispatch($event);
-
             try {
                 $this->client->putItem([
                     'TableName' => $this->table,
@@ -110,6 +108,10 @@ class DynamoDbEventStore implements SnapshotEventStore
                 // store any other events anyhow
                 throw ConcurrentModificationException::forEvent($event, $exception);
             }
+
+            // Only dispatch after we successfully stored them. That way, if there was
+            // a concurrent modification, we didn't update the read models by accident.
+            $this->events->dispatch($event);
         }
     }
 
