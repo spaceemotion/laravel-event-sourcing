@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Illuminate\Events\Dispatcher as LaravelDispatcher;
 use Spaceemotion\LaravelEventSourcing\EventDispatcher;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
@@ -34,7 +35,7 @@ class ProjectorTest extends TestCase
         self::assertEquals([StoredEvent::class, TestEvent::class], $projector->getProjectedEvents());
 
         // Register the projector
-        $dispatcher = new \Illuminate\Events\Dispatcher();
+        $dispatcher = new LaravelDispatcher();
         $projector->register($dispatcher);
 
         // Dispatch it just as we would in the event stores
