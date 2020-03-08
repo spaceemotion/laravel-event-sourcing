@@ -10,35 +10,26 @@ use Spaceemotion\LaravelEventSourcing\TestAggregate;
 class TestAggregateTest extends TestCase
 {
     /** @test */
-    public function it_rebuilds_the_aggregate_based_on_a_list_of_events(): void
+    public function it_records_the_events_recorded_during_creation(): void
     {
-        $aggregate = TestAggregateRoot::new();
+        $aggregate = TestAggregateRoot::new()
+            ->set(['foo' => 'bar'])
+            ->set(['age' => 42]);
 
-        (new TestAggregate($aggregate))
-            ->given(new TestEvent(['foo' => 'bar']));
-
-        self::assertEquals(['foo' => 'bar'], $aggregate->state);
-    }
-
-    /** @test */
-    public function it_records_the_events_recorded_during_when(): void
-    {
-        (new TestAggregate(TestAggregateRoot::new()))
-            ->when(static function (TestAggregateRoot $aggregate): void {
-                $aggregate
-                    ->record(new TestEvent(['foo' => 'bar']))
-                    ->record(new TestEvent(['age' => 42]));
-            })
+        TestAggregate::for($aggregate)
             ->assertRecorded(TestEvent::class)
             ->assertRecordedInstance(new TestEvent(['foo' => 'bar']))
             ->assertRecordedInstance(new TestEvent(['age' => 42]));
     }
 
     /** @test */
-    public function assertions_only_affect_the_events_during_when(): void
+    public function it_only_asserts_new_events(): void
     {
-        (new TestAggregate(TestAggregateRoot::new()))
-            ->given(new TestEvent())
+        $aggregate = TestAggregateRoot::rebuild([
+            new TestEvent(['foo' => 'bar']),
+        ]);
+
+        TestAggregate::for($aggregate)
             ->assertNotRecorded(TestEvent::class)
             ->assertNothingRecorded();
     }

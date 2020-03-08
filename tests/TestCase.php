@@ -26,6 +26,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
     {
         config(['laravel-event-sourcing.event_class' => [
             'test' => TestEvent::class,
+            'created' => TestCreatedEvent::class,
         ]]);
     }
 }

@@ -4,30 +4,24 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
-use Illuminate\Support\Carbon;
+use Spaceemotion\LaravelEventSourcing\AggregateId;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
+use function array_map;
+
 class InMemoryEventStore implements EventStore
 {
-    /** @var array<string,iterable<StoredEvent>> */
+    /** @var array<string,iterable<Event>> */
     protected array $events = [];
 
     /**
-     * @param  Event[]  $events
+     * @return StoredEvent[]|iterable<Event>
      */
-    public function setEvents(AggregateRoot $aggregate, array $events): void
+    public function retrieveAll(AggregateId $id): iterable
     {
-        $this->events[(string) $aggregate->getId()] = $this->buildStoredEvents($aggregate, $events);
-    }
-
-    /**
-     * @return StoredEvent[]|iterable<StoredEvent>
-     */
-    public function retrieveAll(AggregateRoot $aggregate): iterable
-    {
-        return $this->events[(string) $aggregate->getId()];
+        return $this->events[(string) $id];
     }
 
     /**
@@ -35,26 +29,9 @@ class InMemoryEventStore implements EventStore
      */
     public function persist(AggregateRoot $aggregate): void
     {
-        $this->events[(string) $aggregate->getId()] = $aggregate->flushEvents();
-    }
-
-    /**
-     * @param  Event[]|array<int,Event>  $events
-     * @return StoredEvent[]
-     */
-    protected function buildStoredEvents(AggregateRoot $aggregate, iterable $events): array
-    {
-        $store = [];
-
-        foreach ($events as $version => $event) {
-            $store[] = new StoredEvent(
-                $aggregate,
-                $event,
-                (int) $version,
-                Carbon::now()->toImmutable(),
-            );
-        }
-
-        return $store;
+        $this->events[(string) $aggregate->getId()] = array_map(
+            static fn (StoredEvent $event) => $event->getEvent(),
+            [...$aggregate->flushEvents()],
+        );
     }
 }

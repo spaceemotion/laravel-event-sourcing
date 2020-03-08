@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
+use Spaceemotion\LaravelEventSourcing\AggregateId;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
@@ -17,7 +18,7 @@ interface EventStore
      *
      * @return StoredEvent[]|iterable<StoredEvent>
      */
-    public function retrieveAll(AggregateRoot $aggregate): iterable;
+    public function retrieveAll(AggregateId $aggregate): iterable;
 
     /**
      * Stores all recorded events of the given aggregate.

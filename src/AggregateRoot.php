@@ -6,10 +6,7 @@ namespace Spaceemotion\LaravelEventSourcing;
 
 use Closure;
 use Illuminate\Support\Carbon;
-use LogicException;
 use RuntimeException;
-use Spaceemotion\LaravelEventSourcing\EventStore\EventStore;
-use Spaceemotion\LaravelEventSourcing\EventStore\SnapshotEventStore;
 use Traversable;
 
 use function get_class;
@@ -18,7 +15,7 @@ use function get_class;
  * The aggregate root is the source of truth. It holds the source data,
  * validates before modification and records any events.
  */
-class AggregateRoot
+abstract class AggregateRoot
 {
     /** @var array<string,array<string,callable|Closure>> */
     protected array $callableCache = [];
@@ -26,15 +23,17 @@ class AggregateRoot
     /** @var StoredEvent[] */
     protected array $events = [];
 
+    /**
+     * Event though each event stores their version, we keep this counter,
+     * so when they get flushed, the new events don't reset/overwrite it.
+     */
     protected int $version = 0;
 
-    protected AggregateId $id;
-
     /**
-     * Locked constructor so we can call methods like "forId"
+     * Locked constructor so we can call methods like "rebuild"
      * without having to worry about dependency resolution.
      */
-    final public function __construct()
+    final protected function __construct()
     {
         // Nothing to do here
     }
@@ -42,10 +41,7 @@ class AggregateRoot
     /**
      * Returns the unique identifier of this aggregate.
      */
-    public function getId(): AggregateId
-    {
-        return $this->id;
-    }
+    abstract public function getId(): AggregateId;
 
     /**
      * Returns the version number of this aggregate.
@@ -99,12 +95,9 @@ class AggregateRoot
      */
     public function newSnapshot(): StoredEvent
     {
-        return new StoredEvent(
-            $this,
-            Snapshot::deserialize($this->buildSnapshot()),
-            $this->version++,
-            Carbon::now()->toImmutable(),
-        );
+        $this->record(new Snapshot($this->version + 1, $this->buildSnapshot()));
+
+        return $this->events[$this->version];
     }
 
     /**
@@ -112,43 +105,26 @@ class AggregateRoot
      * from the given event store. This is done by fetching
      * all past events and applying them in order.
      *
+     * @param Event[] $events
      * @return $this
      */
-    public function rebuild(EventStore $store): self
+    public static function rebuild(iterable $events): self
     {
-        if (count($this->events) > 0) {
-            throw new LogicException('Only fresh instances can be rebuilt.');
+        $instance = new static();
+
+        foreach ($events as $event) {
+            if ($event instanceof Snapshot) {
+                $instance->applySnapshot($event->getPayload());
+                $instance->version = $event->getVersion();
+                continue;
+            }
+
+            $instance->apply($event);
+
+            $instance->version++;
         }
 
-        foreach ($store->retrieveAll($this) as $event) {
-            $this->apply($event->getEvent());
-
-            $this->version = $event->getVersion() + 1;
-        }
-
-        return $this;
-    }
-
-    /**
-     * Reconstitutes the current state based on a snapshot.
-     * Afterwards, the cached state will be updated
-     * by any events that have been stored since.
-     *
-     * @return $this
-     */
-    public function rebuildFromSnapshot(SnapshotEventStore $store): self
-    {
-        $snapshot = $store->retrieveLastSnapshot($this);
-
-        if ($snapshot !== null) {
-            // serialize() just gives back the payload, there's no conversion happening
-            $this->applySnapshot($snapshot->getEvent()->serialize());
-
-            // increase version to not overwrite the snapshot in future saves
-            $this->version = $snapshot->getVersion() + 1;
-        }
-
-        return $this->rebuild($store);
+        return $instance;
     }
 
     /**
@@ -157,18 +133,18 @@ class AggregateRoot
      *
      * @return $this
      */
-    public function record(Event $event): self
+    protected function record(Event $event): self
     {
         $this->apply($event);
 
+        $this->version++;
+
         $this->events[$this->version] = new StoredEvent(
-            $this,
+            $this->getId(),
             $event,
             $this->version,
             Carbon::now()->toImmutable(),
         );
-
-        $this->version++;
 
         return $this;
     }
@@ -179,7 +155,7 @@ class AggregateRoot
      */
     protected function apply(Event $event): void
     {
-        $callable = $this->getHandlingCallable($event);
+        $callable = $this->getEventHandler($event);
 
         if ($callable === null) {
             return;
@@ -193,7 +169,7 @@ class AggregateRoot
      * For performance reasons, this uses a per-instance cache
      * based on the result of getEventHandlers().
      */
-    protected function getHandlingCallable(Event $event): ?callable
+    protected function getEventHandler(Event $event): ?callable
     {
         $handlers = $this->callableCache[static::class] ?? (
             $this->callableCache[static::class] = $this->getEventHandlers()
@@ -213,31 +189,5 @@ class AggregateRoot
         yield from $this->events;
 
         $this->events = [];
-    }
-
-    /**
-     * Creates a shallow copy of this aggregate that only holds
-     * the original AggregateId. No events will be copied over
-     * (neither past nor any recorded during its life cycle).
-     *
-     * @return static
-     */
-    public function fresh(): self
-    {
-        return self::forId($this->getId());
-    }
-
-    /**
-     * Creates a new instance for the given aggregate ID.
-     * This does not load any existing data yet.
-     *
-     * @return static
-     */
-    public static function forId(AggregateId $id): self
-    {
-        $instance = new static();
-        $instance->id = $id;
-
-        return $instance;
     }
 }

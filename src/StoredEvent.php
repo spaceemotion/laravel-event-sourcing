@@ -8,15 +8,16 @@ use Carbon\CarbonImmutable;
 
 final class StoredEvent
 {
-    private AggregateRoot $aggregate;
+    private AggregateId $aggregateId;
     private Event $event;
     private int $version;
     private CarbonImmutable $persistedAt;
 
-    public function __construct(AggregateRoot $aggregate, Event $event, int $version, CarbonImmutable $persistedAt)
+
+    public function __construct(AggregateId $aggregateId, Event $event, int $version, CarbonImmutable $persistedAt)
     {
         $this->event = $event;
-        $this->aggregate = $aggregate;
+        $this->aggregateId = $aggregateId;
         $this->version = $version;
         $this->persistedAt = $persistedAt;
     }
@@ -26,9 +27,9 @@ final class StoredEvent
         return $this->event;
     }
 
-    public function getAggregate(): AggregateRoot
+    public function getAggregateId(): AggregateId
     {
-        return $this->aggregate;
+        return $this->aggregateId;
     }
 
     public function getVersion(): int

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
+use Aws\Result;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
 use Illuminate\Support\Carbon;
+use Spaceemotion\LaravelEventSourcing\AggregateId;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
@@ -18,7 +20,7 @@ use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 use function get_class;
 
-class DynamoDbEventStore implements SnapshotEventStore
+class DynamoDbEventStore implements EventStore, SnapshotEventStore
 {
     protected EventDispatcher $events;
 
@@ -48,31 +50,20 @@ class DynamoDbEventStore implements SnapshotEventStore
     /**
      * {@inheritdoc}
      */
-    public function retrieveAll(AggregateRoot $aggregate): iterable
+    public function retrieveAll(AggregateId $id): iterable
     {
         $response = $this->client->query([
             'TableName' => $this->table,
-            'KeyConditionExpression' => 'EventStream = :stream and Version >= :version',
+            'KeyConditionExpression' => 'EventStream = :stream',
             'FilterExpression' => 'EventType <> :type',
             'ConsistentRead' => true,
             'ExpressionAttributeValues' => [
-                ':stream' => ['S' => (string) $aggregate->getId()],
+                ':stream' => ['S' => (string) $id],
                 ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
-                ':version' => ['N' => $aggregate->getCurrentVersion()],
             ],
         ]);
 
-        foreach ($response['Items'] as $item) {
-            /** @var Event $class */
-            $class = $this->classMapper->decode($item['EventType']['S']);
-
-            yield new StoredEvent(
-                $aggregate,
-                $class::deserialize($this->marshaler->unmarshalValue($item['Payload'])),
-                (int) $item['Version']['N'],
-                Carbon::parse($item['CreatedAt']['S'])->toImmutable(),
-            );
-        }
+        yield from $this->itemsToEvents($response);
     }
 
     public function persist(AggregateRoot $aggregate): void
@@ -115,10 +106,7 @@ class DynamoDbEventStore implements SnapshotEventStore
         }
     }
 
-    /**
-     * Returns the last stored snapshot for the given aggregate.
-     */
-    public function retrieveLastSnapshot(AggregateRoot $aggregate): ?StoredEvent
+    public function retrieveFromLastSnapshot(AggregateId $id): iterable
     {
         $response = $this->client->query([
             'TableName' => $this->table,
@@ -126,24 +114,16 @@ class DynamoDbEventStore implements SnapshotEventStore
             'FilterExpression' => 'EventType = :type',
             'ConsistentRead' => true,
             'ScanIndexForward' => false,
+            'Limit' => 1,
             'ExpressionAttributeValues' => [
-                ':stream' => ['S' => (string) $aggregate->getId()],
+                ':stream' => ['S' => (string) $id],
                 ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
             ],
         ]);
 
-        if ((int) ($response['Count'] ?? 0) < 1) {
-            return null;
-        }
+        yield from $this->itemsToEvents($response);
 
-        $record = $response['Items'][0];
-
-        return new StoredEvent(
-            $aggregate,
-            Snapshot::deserialize($this->marshaler->unmarshalValue($record['Payload'])),
-            (int) $record['Version']['N'],
-            Carbon::parse($record['CreatedAt']['S'])->toImmutable(),
-        );
+        // TODO does not load any data after the last snapshot
     }
 
     /**
@@ -182,5 +162,15 @@ class DynamoDbEventStore implements SnapshotEventStore
     protected function wasConcurrentModification(DynamoDbException $exception): bool
     {
         return $exception->getAwsErrorCode() === 'ConditionalCheckFailedException';
+    }
+
+    protected function itemsToEvents(Result $response): iterable
+    {
+        foreach ($response['Items'] as $item) {
+            /** @var Event $class */
+            $class = $this->classMapper->decode($item['EventType']['S']);
+
+            yield $class::deserialize($this->marshaler->unmarshalValue($item['Payload']));
+        }
     }
 }

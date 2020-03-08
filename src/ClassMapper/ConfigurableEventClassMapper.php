@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\ClassMapper;
 
+use Spaceemotion\LaravelEventSourcing\Snapshot;
+
+use Spaceemotion\LaravelEventSourcing\EventStore\SnapshotEventStore;
+
 use function array_flip;
 
 class ConfigurableEventClassMapper implements EventClassMapper
@@ -19,6 +23,8 @@ class ConfigurableEventClassMapper implements EventClassMapper
      */
     public function __construct(array $classMap = [])
     {
+        $classMap[SnapshotEventStore::EVENT_TYPE_SNAPSHOT] = Snapshot::class;
+
         $this->toClassName = $classMap;
         $this->fromClassName = array_flip($this->toClassName);
     }

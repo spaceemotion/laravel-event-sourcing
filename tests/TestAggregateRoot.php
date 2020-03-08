@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests;
 
+use Spaceemotion\LaravelEventSourcing\AggregateId;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Ids\Uuid;
 
-class TestAggregateRoot extends AggregateRoot
+final class TestAggregateRoot extends AggregateRoot
 {
     public array $state = [];
+    private AggregateId $id;
 
     public static function new(): self
     {
-        return static::forId(Uuid::next());
+        return (new self())->record(new TestCreatedEvent(Uuid::next()));
+    }
+
+    public function getId(): AggregateId
+    {
+        return $this->id;
     }
 
     /**
@@ -21,7 +28,8 @@ class TestAggregateRoot extends AggregateRoot
      */
     protected function applySnapshot(array $snapshot): void
     {
-        $this->state = $snapshot;
+        $this->id = Uuid::fromString($snapshot['id']);
+        $this->state = $snapshot['state'];
     }
 
     /**
@@ -29,12 +37,12 @@ class TestAggregateRoot extends AggregateRoot
      */
     protected function buildSnapshot(): array
     {
-        return $this->state;
+        return [
+            'id' => (string) $this->id,
+            'state' => $this->state,
+        ];
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function set(array $state): self
     {
         return $this->record(new TestEvent($state));
@@ -46,6 +54,9 @@ class TestAggregateRoot extends AggregateRoot
     protected function getEventHandlers(): array
     {
         return [
+            TestCreatedEvent::class => function (TestCreatedEvent $event): void {
+                $this->id = $event->getId();
+            },
             TestEvent::class => function (TestEvent $event): void {
                 $this->state = $event->attributes;
             },

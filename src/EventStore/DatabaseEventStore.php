@@ -6,15 +6,14 @@ namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
+use Spaceemotion\LaravelEventSourcing\AggregateId;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\EventDispatcher;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
-use Spaceemotion\LaravelEventSourcing\Snapshot;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use stdClass;
 
@@ -24,7 +23,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-class DatabaseEventStore implements SnapshotEventStore
+class DatabaseEventStore implements EventStore, SnapshotEventStore
 {
     public const FIELD_AGGREGATE_ID = 'aggregate_id';
     public const FIELD_CREATED_AT = 'created_at';
@@ -43,57 +42,27 @@ class DatabaseEventStore implements SnapshotEventStore
         $this->events = $events;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function retrieveAll(AggregateRoot $aggregate): iterable
+    public function retrieveAll(AggregateId $id): iterable
     {
-        $version = $aggregate->getCurrentVersion();
+        $query = $this->newQuery()
+            ->where(self::FIELD_AGGREGATE_ID, $id);
 
-        return $this->newQuery()
-            ->where(self::FIELD_AGGREGATE_ID, $aggregate->getId())
-            ->when($version > 0, static function (Builder $query) use ($version): void {
-                $query->where(self::FIELD_VERSION, '>=', $version);
-            })
-            ->cursor()
-            ->reject(static fn(stdClass $row): bool => $row->{self::FIELD_EVENT_TYPE} === self::EVENT_TYPE_SNAPSHOT)
-            ->map(function (stdClass $row) use ($aggregate): StoredEvent {
-                $payload = json_decode($row->{self::FIELD_PAYLOAD}, true, 32, JSON_THROW_ON_ERROR);
-
-                /** @var Event $base */
-                $base = $this->classMapper->decode($row->{self::FIELD_EVENT_TYPE});
-
-                return new StoredEvent(
-                    $aggregate,
-                    $base::deserialize($payload),
-                    (int) $row->{self::FIELD_VERSION},
-                    Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable(),
-                );
-            });
+        return $this->retrieveByQuery($id, $query);
     }
 
-    public function retrieveLastSnapshot(AggregateRoot $aggregate): ?StoredEvent
+    public function retrieveFromLastSnapshot(AggregateId $id): iterable
     {
-        /** @var stdClass|null $row */
-        $row = $this->newQuery()
-            ->where(self::FIELD_AGGREGATE_ID, $aggregate->getId())
-            ->where(self::FIELD_EVENT_TYPE, self::EVENT_TYPE_SNAPSHOT)
-            ->latest()
-            ->orderByDesc(self::FIELD_VERSION)
-            ->first();
+        $query = $this->newQuery()
+            ->where(self::FIELD_AGGREGATE_ID, $id)
+            ->where('version', '>=', static function (Builder $query) use ($id) {
+                $query
+                    ->from('stored_events')
+                    ->where(self::FIELD_AGGREGATE_ID, (string) $id)
+                    ->where(self::FIELD_EVENT_TYPE, self::EVENT_TYPE_SNAPSHOT)
+                    ->selectRaw('MAX(' . self::FIELD_VERSION . ')');
+            });
 
-        if ($row === null) {
-            return null;
-        }
-
-        $payload = json_decode($row->{self::FIELD_PAYLOAD}, true, 32, JSON_THROW_ON_ERROR);
-
-        return new StoredEvent(
-            $aggregate,
-            Snapshot::deserialize($payload),
-            (int) $row->{self::FIELD_VERSION},
-            Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable(),
-        );
+        return $this->retrieveByQuery($id, $query);
     }
 
     public function persist(AggregateRoot $aggregate): void
@@ -101,14 +70,7 @@ class DatabaseEventStore implements SnapshotEventStore
         $events = new LazyCollection($aggregate->flushEvents());
 
         // Build and execute a bulk query
-        $rows = $events->map(fn (StoredEvent $event) => [
-            self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
-            self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
-            self::FIELD_EVENT_TYPE => $this->classMapper->encode(get_class($event->getEvent())),
-            self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
-            self::FIELD_PAYLOAD => json_encode($event->getEvent()->serialize(), JSON_THROW_ON_ERROR, 32),
-            self::FIELD_VERSION => $event->getVersion(),
-        ]);
+        $rows = $events->map(fn (StoredEvent $event): array => $this->mapStoredEvent($event));
 
         try {
             $this->newQuery()->insert($rows->toArray());
@@ -126,27 +88,9 @@ class DatabaseEventStore implements SnapshotEventStore
 
     public function persistSnapshot(AggregateRoot $aggregate): void
     {
-        // Better to be safe than sorry
+        $aggregate->newSnapshot();
+
         $this->persist($aggregate);
-
-        $snapshot = $aggregate->newSnapshot();
-
-        try {
-            $this->newQuery()->insert([
-                self::FIELD_AGGREGATE_ID => (string) $aggregate->getId(),
-                self::FIELD_CREATED_AT => (string) $snapshot->getPersistedAt(),
-                self::FIELD_EVENT_TYPE => self::EVENT_TYPE_SNAPSHOT,
-                self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
-                self::FIELD_PAYLOAD => json_encode($snapshot->getEvent()->serialize(), JSON_THROW_ON_ERROR, 32),
-                self::FIELD_VERSION => $snapshot->getVersion(),
-            ]);
-        } catch (QueryException $exception) {
-            if (!$this->wasConcurrentModification($exception)) {
-                throw $exception;
-            }
-
-            throw ConcurrentModificationException::forSnapshot($snapshot, $exception);
-        }
     }
 
     protected function newQuery(): Builder
@@ -159,5 +103,34 @@ class DatabaseEventStore implements SnapshotEventStore
         // Code for 'integrity constraint violation'
         // https://en.wikipedia.org/wiki/SQLSTATE
         return (int) $exception->getCode() === 23_000;
+    }
+
+    protected function mapStoredEvent(StoredEvent $event): array
+    {
+        return [
+            self::FIELD_AGGREGATE_ID => (string) $event->getAggregateId(),
+            self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
+            self::FIELD_EVENT_TYPE => $this->classMapper->encode(get_class($event->getEvent())),
+            self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
+            self::FIELD_PAYLOAD => json_encode($event->getEvent()->serialize(), JSON_THROW_ON_ERROR, 32),
+            self::FIELD_VERSION => $event->getVersion(),
+        ];
+    }
+
+    protected function retrieveByQuery(AggregateId $id, Builder $builder): LazyCollection
+    {
+        return $builder
+            ->orderBy(self::FIELD_VERSION)
+            ->cursor()
+            ->mapWithKeys(
+                function (stdClass $row): array {
+                    $payload = json_decode($row->{self::FIELD_PAYLOAD}, true, 32, JSON_THROW_ON_ERROR);
+
+                    /** @var Event $base */
+                    $base = $this->classMapper->decode($row->{self::FIELD_EVENT_TYPE});
+
+                    return [(int)$row->{self::FIELD_VERSION} => $base::deserialize($payload)];
+                }
+            );
     }
 }

@@ -6,7 +6,8 @@ namespace Spaceemotion\LaravelEventSourcing;
 
 use Illuminate\Support\LazyCollection;
 use PHPUnit\Framework\Assert;
-use Spaceemotion\LaravelEventSourcing\EventStore\InMemoryEventStore;
+
+use function get_class;
 
 /**
  * Represents a wrapping class to make testing aggregate roots easier
@@ -15,42 +16,30 @@ use Spaceemotion\LaravelEventSourcing\EventStore\InMemoryEventStore;
  */
 class TestAggregate
 {
-    protected AggregateRoot $aggregate;
+    /** @var StoredEvent[]|array<string,StoredEvent> */
+    protected array $events;
 
-    /** @var StoredEvent[]|array<string,StoredEvent>|null */
-    protected ?array $events = null;
-
-    public function __construct(AggregateRoot $aggregate)
+    /**
+     * Receives the given aggregate root to do some assertions
+     * when creating events by calling methods on it.
+     *
+     * Usually, the aggregate has been created by using the rebuild()
+     * method with any previous events ("given").
+     */
+    protected function __construct(AggregateRoot $aggregate)
     {
-        $this->aggregate = $aggregate;
+        $this->events = (new LazyCollection($aggregate->flushEvents()))
+            ->map(static fn(StoredEvent $event): Event => $event->getEvent())
+            ->groupBy(static fn(Event $event): string => get_class($event))
+            ->toArray();
     }
 
     /**
-     * Rebuilds the given aggregate using the provided list of events.
-     *
-     * @return $this
+     * Convenience method for the constructor.
      */
-    public function given(Event ...$events): self
+    public static function for(AggregateRoot $aggregate): self
     {
-        $repository = new InMemoryEventStore();
-        $repository->setEvents($this->aggregate, $events);
-
-        $this->aggregate->rebuild($repository);
-
-        return $this;
-    }
-
-    /**
-     * Calls the given callback and stores the recorded events
-     * afterwards for later use by the assertion methods.
-     *
-     * @return $this
-     */
-    public function when(callable $callback): self
-    {
-        $callback($this->aggregate);
-
-        return $this;
+        return new self($aggregate);
     }
 
     /**
@@ -72,7 +61,7 @@ class TestAggregate
      */
     public function assertNotRecorded(string $eventClass): self
     {
-        Assert::assertArrayNotHasKey($eventClass, $this->getRecordedEvents());
+        Assert::assertArrayNotHasKey($eventClass, $this->events);
 
         return $this;
     }
@@ -86,7 +75,7 @@ class TestAggregate
      */
     public function assertRecordedInstance(Event $event): self
     {
-        Assert::assertContainsEquals($event, $this->getRecordedEvents()[get_class($event)]);
+        Assert::assertContainsEquals($event, $this->events[get_class($event)]);
 
         return $this;
     }
@@ -100,26 +89,8 @@ class TestAggregate
      */
     public function assertRecorded(string $event): self
     {
-        Assert::assertArrayHasKey($event, $this->getRecordedEvents());
+        Assert::assertArrayHasKey($event, $this->events);
 
         return $this;
-    }
-
-    /**
-     * Returns the list of recorded events on the aggregate.
-     * They're grouped by their event class.
-     *
-     * @return StoredEvent[][]|array<string,StoredEvent[]>
-     */
-    protected function getRecordedEvents(): array
-    {
-        if ($this->events === null) {
-            $this->events = (new LazyCollection($this->aggregate->flushEvents()))
-                ->map(static fn(StoredEvent $event): Event => $event->getEvent())
-                ->groupBy(static fn(Event $event): string => get_class($event))
-                ->toArray();
-        }
-
-        return $this->events;
     }
 }
