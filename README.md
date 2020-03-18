@@ -1,5 +1,3 @@
-<!--README_START-->
-
 # Laravel Event Sourcing
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/spaceemotion/laravel-event-sourcing.svg?style=flat-square)](https://packagist.org/packages/spaceemotion/laravel-event-sourcing)
@@ -7,7 +5,7 @@
 [![Actions Status](https://github.com/spaceemotion/laravel-event-sourcing/workflows/CI/badge.svg)](https://github.com/spaceemotion/laravel-event-sourcing/actions)
 [![CodeCov Status](https://codecov.io/gh/spaceemotion/laravel-event-sourcing/branch/master/graph/badge.svg)](https://codecov.io/gh/spaceemotion/laravel-event-sourcing)
 
-Opiniated event sourcing framework for Laravel optimized for speed and type safety.
+Opinionated event sourcing framework for Laravel optimized for speed and type safety.
 
 #### Functionality
 - Uses generators for fetching and storing events for a small memory footprint
@@ -192,7 +190,7 @@ function store(string $id, Request $request, EventStore $store)
 }
 ```
 
-### Changelog
+## Changelog
 
 Please look at [the releases](https://github.com/spaceemotion/laravel-event-sourcing/releases) for more information on what has changed recently.
 
