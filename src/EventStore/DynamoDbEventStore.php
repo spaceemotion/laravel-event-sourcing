@@ -8,20 +8,23 @@ use Aws\Result;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
-use Illuminate\Support\Carbon;
 use Spaceemotion\LaravelEventSourcing\AggregateId;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\EventDispatcher;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
-use Spaceemotion\LaravelEventSourcing\Snapshot;
-use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 use function get_class;
 
 class DynamoDbEventStore implements EventStore, SnapshotEventStore
 {
+    public const FIELD_CREATED_AT = 'CreatedAt';
+    public const FIELD_EVENT_STREAM = 'EventStream';
+    public const FIELD_EVENT_TYPE = 'EventType';
+    public const FIELD_PAYLOAD = 'Payload';
+    public const FIELD_VERSION = 'Version';
+
     protected EventDispatcher $events;
 
     protected EventClassMapper $classMapper;
@@ -54,9 +57,13 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
     {
         $response = $this->client->query([
             'TableName' => $this->table,
-            'KeyConditionExpression' => 'EventStream = :stream',
-            'FilterExpression' => 'EventType <> :type',
+            'KeyConditionExpression' => '#Stream = :stream',
+            'FilterExpression' => '#Type <> :type',
             'ConsistentRead' => true,
+            'ExpressionAttributeNames' => [
+                '#Stream' => self::FIELD_EVENT_STREAM,
+                '#Type' => self::FIELD_EVENT_TYPE,
+            ],
             'ExpressionAttributeValues' => [
                 ':stream' => ['S' => (string) $id],
                 ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
@@ -78,17 +85,17 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
                 $this->client->putItem([
                     'TableName' => $this->table,
                     'Item' => [
-                        'EventStream' => ['S' => (string) $aggregate->getId()],
-                        'EventType' => ['S' => $this->classMapper->encode(get_class($event->getEvent()))],
-                        'Version' => ['N' => (int) $version],
-                        'Payload' => $this->marshaler->marshalValue($event->getEvent()->serialize()),
-                        'CreatedAt' => ['S' => (string) $event->getPersistedAt()],
+                        self::FIELD_EVENT_STREAM => ['S' => (string) $aggregate->getId()],
+                        self::FIELD_EVENT_TYPE => ['S' => $this->classMapper->encode(get_class($event->getEvent()))],
+                        self::FIELD_VERSION => ['N' => (int) $version],
+                        self::FIELD_PAYLOAD => $this->marshaler->marshalValue($event->getEvent()->serialize()),
+                        self::FIELD_CREATED_AT => ['S' => (string) $event->getPersistedAt()],
                     ],
-                    'ConditionExpression' => 'EventStream <> :stream AND (Version <> :version OR Version < :version)',
-                    'ExpressionAttributeValues' => [
-                        ':stream' => ['S' => (string) $aggregate->getId()],
-                        ':version' => ['N' => (int) $version],
-                    ],
+                   'ExpressionAttributeNames' => [
+                       '#Version' => self::FIELD_VERSION,
+                   ],
+                    'ConditionExpression' => 'attribute_not_exists(#Version)',
+                    'ReturnValues' => 'NONE',
                 ]);
             } catch (DynamoDbException $exception) {
                 if (!$this->wasConcurrentModification($exception)) {
@@ -110,11 +117,15 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
     {
         $response = $this->client->query([
             'TableName' => $this->table,
-            'KeyConditionExpression' => 'EventStream = :stream',
-            'FilterExpression' => 'EventType = :type',
+            'KeyConditionExpression' => '#Stream = :stream',
+            'FilterExpression' => '#Type = :type',
             'ConsistentRead' => true,
             'ScanIndexForward' => false,
             'Limit' => 1,
+             'ExpressionAttributeNames' => [
+                 '#Stream' => self::FIELD_EVENT_STREAM,
+                 '#Type' => self::FIELD_EVENT_TYPE,
+             ],
             'ExpressionAttributeValues' => [
                 ':stream' => ['S' => (string) $id],
                 ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
@@ -123,40 +134,22 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
 
         yield from $this->itemsToEvents($response);
 
-        // TODO does not load any data after the last snapshot
-    }
+        $response = $this->client->query([
+            'TableName' => $this->table,
+            'KeyConditionExpression' => '#Stream = :stream',
+            'FilterExpression' => '#Type = :type',
+            'ConsistentRead' => true,
+            'ExpressionAttributeNames' => [
+                '#Stream' => self::FIELD_EVENT_STREAM,
+                '#Type' => self::FIELD_EVENT_TYPE,
+            ],
+            'ExpressionAttributeValues' => [
+                ':stream' => ['S' => (string) $id],
+                ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
+            ],
+        ]);
 
-    /**
-     * Stores the current state of the given aggregate in a snapshot.
-     * This saves the current version to know which to resume from.
-     */
-    public function persistSnapshot(AggregateRoot $aggregate): void
-    {
-        $snapshot = $aggregate->newSnapshot();
-
-        try {
-            $this->client->putItem([
-                'TableName' => $this->table,
-                'Item' => [
-                    'EventStream' => ['S' => (string) $aggregate->getId()],
-                    'EventType' => ['S' => self::EVENT_TYPE_SNAPSHOT],
-                    'Version' => ['N' => $snapshot->getVersion()],
-                    'Payload' => $this->marshaler->marshalValue($snapshot->getEvent()->serialize()),
-                    'CreatedAt' => ['S' => (string) $snapshot->getPersistedAt()],
-                ],
-                'ConditionExpression' => 'EventStream <> :stream AND (Version <> :version OR Version < :version)',
-                'ExpressionAttributeValues' => [
-                    ':stream' => ['S' => (string) $aggregate->getId()],
-                    ':version' => ['N' => $snapshot->getVersion()],
-                ],
-            ]);
-        } catch (DynamoDbException $exception) {
-            if (!$this->wasConcurrentModification($exception)) {
-                throw $exception;
-            }
-
-            throw ConcurrentModificationException::forSnapshot($snapshot, $exception);
-        }
+        yield from $this->itemsToEvents($response);
     }
 
     protected function wasConcurrentModification(DynamoDbException $exception): bool
@@ -168,9 +161,9 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
     {
         foreach ($response['Items'] as $item) {
             /** @var Event $class */
-            $class = $this->classMapper->decode($item['EventType']['S']);
+            $class = $this->classMapper->decode($item[self::FIELD_EVENT_TYPE]['S']);
 
-            yield $class::deserialize($this->marshaler->unmarshalValue($item['Payload']));
+            yield $class::deserialize($this->marshaler->unmarshalValue($item[self::FIELD_PAYLOAD]));
         }
     }
 }
