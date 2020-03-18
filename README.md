@@ -13,11 +13,20 @@ Opiniated event sourcing framework for Laravel optimized for speed and type safe
 - Uses generators for fetching and storing events for a small memory footprint
 - Optimistic concurrent modification detection using event versioning
 - Snapshot support for faster aggregate root load times
+- Projections for read models using "native" Laravel events
 
 #### Developer Experience
-- Has type extensive hints for great IDE (and static analysis) support
+- Has type extensive hints for great IDE and static analysis support (no magic method calls)
 - Integrated support for SQL and NoSQL event stores
 - Flexible, but not bloated framework
+- Unit-Test support via custom assertion helpers (`TestAggregateRoot` class)
+
+#### Feature Support
+Driver | Event Store | Snapshots
+-------|-------------|----------
+SQL | ✔ | ✔
+DynamoDB | ✔ | ➖ _(storing works, loading still loads all events)_
+In-Memory _(for unit tests)_ | ✔ | ❌
 
 ## Installation
 
