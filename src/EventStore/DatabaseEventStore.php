@@ -45,7 +45,8 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
     public function retrieveAll(AggregateId $id): iterable
     {
         $query = $this->newQuery()
-            ->where(self::FIELD_AGGREGATE_ID, $id);
+            ->where(self::FIELD_AGGREGATE_ID, $id)
+            ->where(self::FIELD_EVENT_TYPE, '!=', self::EVENT_TYPE_SNAPSHOT);
 
         return $this->retrieveByQuery($id, $query);
     }
