@@ -18,6 +18,7 @@ class TestAggregateTest extends TestCase
             ->set(['age' => 42]);
 
         TestAggregate::for($aggregate)
+            ->assertRecorded(TestCreatedEvent::class)
             ->assertRecorded(TestEvent::class)
             ->assertRecordedInstance(new TestEvent(['foo' => 'bar']))
             ->assertRecordedInstance(new TestEvent(['age' => 42]));
