@@ -33,6 +33,8 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
     public const FIELD_PAYLOAD = 'payload';
     public const FIELD_VERSION = 'version';
 
+    protected const CHUNK_SIZE_PERSIST = 128;
+
     protected EventClassMapper $classMapper;
 
     protected EventDispatcher $events;
@@ -73,7 +75,9 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
         $rows = $events->map(fn (StoredEvent $event): array => $this->mapStoredEvent($event));
 
         try {
-            $this->newQuery()->insert($rows->toArray());
+            $rows->chunk(self::CHUNK_SIZE_PERSIST)->each(fn (LazyCollection $chunk) => (
+                $this->newQuery()->insert($chunk->toArray())
+            ));
         } catch (QueryException $exception) {
             if (!$this->wasConcurrentModification($exception)) {
                 throw $exception;
