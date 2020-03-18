@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
 use Aws\Result;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
@@ -26,6 +27,8 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
     public const FIELD_EVENT_TYPE = 'EventType';
     public const FIELD_PAYLOAD = 'Payload';
     public const FIELD_VERSION = 'Version';
+
+    public const INDEX_BY_TYPE = 'ByType';
 
     protected EventDispatcher $events;
 
@@ -93,9 +96,9 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
                         self::FIELD_PAYLOAD => $this->marshaler->marshalValue($event->getEvent()->serialize()),
                         self::FIELD_CREATED_AT => ['S' => (string) $event->getPersistedAt()],
                     ],
-                   'ExpressionAttributeNames' => [
-                       '#Version' => self::FIELD_VERSION,
-                   ],
+                    'ExpressionAttributeNames' => [
+                        '#Version' => self::FIELD_VERSION,
+                    ],
                     'ConditionExpression' => 'attribute_not_exists(#Version)',
                     'ReturnValues' => 'NONE',
                 ]);
@@ -117,30 +120,13 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
 
     public function retrieveFromLastSnapshot(AggregateId $id): iterable
     {
+        // Search through the index to find the most recent snapshot
         $response = $this->client->query([
             'TableName' => $this->table,
-            'KeyConditionExpression' => '#Stream = :stream',
-            'FilterExpression' => '#Type = :type',
-            'ConsistentRead' => true,
+            'IndexName' => self::INDEX_BY_TYPE,
+            'KeyConditionExpression' => '#Type = :type',
+            'FilterExpression' => '#Stream = :stream',
             'ScanIndexForward' => false,
-            'Limit' => 1,
-             'ExpressionAttributeNames' => [
-                 '#Stream' => self::FIELD_EVENT_STREAM,
-                 '#Type' => self::FIELD_EVENT_TYPE,
-             ],
-            'ExpressionAttributeValues' => [
-                ':stream' => ['S' => (string) $id],
-                ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
-            ],
-        ]);
-
-        yield from $this->itemsToEvents($id, $response);
-
-        $response = $this->client->query([
-            'TableName' => $this->table,
-            'KeyConditionExpression' => '#Stream = :stream',
-            'FilterExpression' => '#Type = :type',
-            'ConsistentRead' => true,
             'ExpressionAttributeNames' => [
                 '#Stream' => self::FIELD_EVENT_STREAM,
                 '#Type' => self::FIELD_EVENT_TYPE,
@@ -148,6 +134,27 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
             'ExpressionAttributeValues' => [
                 ':stream' => ['S' => (string) $id],
                 ':type' => ['S' => self::EVENT_TYPE_SNAPSHOT],
+            ],
+        ]);
+
+        // In case there hasn't been a snapshot, retrieve as usual
+        $recentSnapshotIndex = Arr::first($response['Items']);
+
+        if ($recentSnapshotIndex === null) {
+            yield from $this->retrieveAll($id);
+        }
+
+        $response = $this->client->query([
+            'TableName' => $this->table,
+            'KeyConditionExpression' => '#Stream = :stream and #Version >= :version',
+            'ConsistentRead' => true,
+            'ExpressionAttributeNames' => [
+                '#Stream' => self::FIELD_EVENT_STREAM,
+                '#Version' => self::FIELD_VERSION,
+            ],
+            'ExpressionAttributeValues' => [
+                ':stream' => ['S' => (string) $id],
+                ':version' => ['N' => $recentSnapshotIndex['Version']['N']],
             ],
         ]);
 

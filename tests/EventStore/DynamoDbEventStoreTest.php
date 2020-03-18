@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
 use Aws\DynamoDb\DynamoDbClient;
-use Spaceemotion\LaravelEventSourcing\Ids\Uuid;
 use Spaceemotion\LaravelEventSourcing\EventStore\DynamoDbEventStore;
-use Spaceemotion\LaravelEventSourcing\Tests\TestAggregateRoot;
 
 use function env;
 use function in_array;
@@ -34,12 +32,25 @@ class DynamoDbEventStoreTest extends EventStoreTest
                 'TableName' => $tableName,
                 'BillingMode' => 'PAY_PER_REQUEST',
                 'AttributeDefinitions' => [
-                    ['AttributeName' => 'EventStream', 'AttributeType' => 'S'],
-                    ['AttributeName' => 'Version', 'AttributeType' => 'N'],
+                    ['AttributeName' => DynamoDbEventStore::FIELD_EVENT_STREAM, 'AttributeType' => 'S'],
+                    ['AttributeName' => DynamoDbEventStore::FIELD_EVENT_TYPE, 'AttributeType' => 'S'],
+                    ['AttributeName' => DynamoDbEventStore::FIELD_VERSION, 'AttributeType' => 'N'],
+                ],
+                'GlobalSecondaryIndexes' => [
+                    [
+                        'IndexName' => DynamoDbEventStore::INDEX_BY_TYPE,
+                        'KeySchema' => [
+                            ['AttributeName' => DynamoDbEventStore::FIELD_EVENT_TYPE, 'KeyType' => 'HASH'],
+                            ['AttributeName' => DynamoDbEventStore::FIELD_VERSION, 'KeyType' => 'RANGE'],
+                        ],
+                        'Projection' => [
+                            'ProjectionType' => 'KEYS_ONLY',
+                        ],
+                    ],
                 ],
                 'KeySchema' => [
-                    ['AttributeName' => 'EventStream', 'KeyType' => 'HASH'],
-                    ['AttributeName' => 'Version', 'KeyType' => 'RANGE'],
+                    ['AttributeName' => DynamoDbEventStore::FIELD_EVENT_STREAM, 'KeyType' => 'HASH'],
+                    ['AttributeName' => DynamoDbEventStore::FIELD_VERSION, 'KeyType' => 'RANGE'],
                 ],
             ]);
         }

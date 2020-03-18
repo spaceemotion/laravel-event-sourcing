@@ -23,7 +23,7 @@ Opinionated event sourcing framework for Laravel optimized for speed and type sa
 Driver | Event Store | Snapshots
 -------|-------------|----------
 SQL | ✔ | ✔
-DynamoDB | ✔ | ➖ _(storing works, loading still loads all events)_
+DynamoDB | ✔ | ✔
 In-Memory _(for unit tests)_ | ✔ | ❌
 
 ## Installation

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Event;
 use Spaceemotion\LaravelEventSourcing\EventStore\EventStore;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
@@ -15,6 +16,7 @@ use Spaceemotion\LaravelEventSourcing\Tests\TestCase;
 use Spaceemotion\LaravelEventSourcing\Tests\TestCreatedEvent;
 use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 
+use function range;
 use function array_push;
 
 abstract class EventStoreTest extends TestCase
@@ -73,7 +75,13 @@ abstract class EventStoreTest extends TestCase
         $aggregate->set(['val' => 'oldest']);
         $aggregate->recordSnapshot();
 
+        $payload = [
+            'text' => \Faker\Provider\Lorem::paragraphs(20),
+        ];
 
+        foreach (range(0, 32) as $i) {
+            $aggregate->set($payload);
+        }
 
         $aggregate->set(['val' => 'old']);
         $aggregate->recordSnapshot();
@@ -99,13 +107,17 @@ abstract class EventStoreTest extends TestCase
 
         $store = $this->createStore();
 
+        // Create two roots, so we can check that version checks are "local"
+        $other = TestAggregateRoot::new();
+        $store->persist($other);
+
         $first = TestAggregateRoot::new();
         $store->persist($first);
 
-        $first->set([1]);
-        $first->set([2]);
-
+        // Create a second instance that gets modified "at the same time"
         $second = TestAggregateRoot::rebuild($store->retrieveAll($first->getId()));
+
+        $first->set(['foo' => 'bar']);
         $second->set(['foo' => 'bar']);
 
         $store->persist($first);
