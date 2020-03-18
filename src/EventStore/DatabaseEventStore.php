@@ -45,7 +45,6 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
     public function retrieveAll(AggregateId $id): iterable
     {
         $query = $this->newQuery()
-            ->where(self::FIELD_AGGREGATE_ID, $id)
             ->where(self::FIELD_EVENT_TYPE, '!=', self::EVENT_TYPE_SNAPSHOT);
 
         return $this->retrieveByQuery($id, $query);
@@ -54,7 +53,6 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
     public function retrieveFromLastSnapshot(AggregateId $id): iterable
     {
         $query = $this->newQuery()
-            ->where(self::FIELD_AGGREGATE_ID, $id)
             ->where('version', '>=', static function (Builder $query) use ($id) {
                 $query
                     ->from('stored_events')
@@ -121,6 +119,7 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
     protected function retrieveByQuery(AggregateId $id, Builder $builder): LazyCollection
     {
         return $builder
+            ->where(self::FIELD_AGGREGATE_ID, $id)
             ->orderBy(self::FIELD_VERSION)
             ->cursor()
             ->mapWithKeys(
