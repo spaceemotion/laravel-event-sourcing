@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
 use Spaceemotion\LaravelEventSourcing\AggregateId;
-use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\Event;
 
 /**
@@ -22,10 +21,4 @@ interface SnapshotEventStore
      * @return Event[]|iterable<Event>
      */
     public function retrieveFromLastSnapshot(AggregateId $id): iterable;
-
-    /**
-     * Stores the current state of the given aggregate in a snapshot.
-     * This saves the current version to know which to resume from.
-     */
-    public function persistSnapshot(AggregateRoot $aggregate): void;
 }

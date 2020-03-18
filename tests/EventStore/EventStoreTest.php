@@ -71,13 +71,15 @@ abstract class EventStoreTest extends TestCase
         $aggregate = TestAggregateRoot::new();
 
         $aggregate->set(['val' => 'oldest']);
-        $store->persist($aggregate);
+        $aggregate->recordSnapshot();
+
+
 
         $aggregate->set(['val' => 'old']);
-        $store->persistSnapshot($aggregate);
-
+        $aggregate->recordSnapshot();
         $aggregate->set(['val' => 'new']);
-        $store->persistSnapshot($aggregate);
+
+        $store->persist($aggregate);
 
         $clone = TestAggregateRoot::rebuild($store->retrieveFromLastSnapshot($aggregate->getId()));
 

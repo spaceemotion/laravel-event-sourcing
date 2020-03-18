@@ -88,16 +88,14 @@ abstract class AggregateRoot
     }
 
     /**
-     * Creates a new, storable snapshot instance.
+     * Creates a new, storable snapshot instance and pushes it onto the event list.
      *
      * This also increases the internal version number so any further
      * changes don't try to overwrite this "snapshot version".
      */
-    public function newSnapshot(): StoredEvent
+    public function recordSnapshot(): self
     {
-        $this->record(new Snapshot($this->version + 1, $this->buildSnapshot()));
-
-        return $this->events[$this->version];
+        return $this->record(new Snapshot($this->buildSnapshot()));
     }
 
     /**

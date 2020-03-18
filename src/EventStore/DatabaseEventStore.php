@@ -85,13 +85,6 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
         $events->each(fn (StoredEvent $event) => $this->events->dispatch($event));
     }
 
-    public function persistSnapshot(AggregateRoot $aggregate): void
-    {
-        $aggregate->newSnapshot();
-
-        $this->persist($aggregate);
-    }
-
     protected function newQuery(): Builder
     {
         return DB::table('stored_events');
