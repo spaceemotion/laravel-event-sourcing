@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
 use Aws\Result;
+use Illuminate\Support\Carbon;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
 use Spaceemotion\LaravelEventSourcing\AggregateId;
+use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
@@ -70,7 +72,7 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
             ],
         ]);
 
-        yield from $this->itemsToEvents($response);
+        yield from $this->itemsToEvents($id, $response);
     }
 
     public function persist(AggregateRoot $aggregate): void
@@ -132,7 +134,7 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
             ],
         ]);
 
-        yield from $this->itemsToEvents($response);
+        yield from $this->itemsToEvents($id, $response);
 
         $response = $this->client->query([
             'TableName' => $this->table,
@@ -149,7 +151,7 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
             ],
         ]);
 
-        yield from $this->itemsToEvents($response);
+        yield from $this->itemsToEvents($id, $response);
     }
 
     protected function wasConcurrentModification(DynamoDbException $exception): bool
@@ -157,13 +159,20 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
         return $exception->getAwsErrorCode() === 'ConditionalCheckFailedException';
     }
 
-    protected function itemsToEvents(Result $response): iterable
+    protected function itemsToEvents(AggregateId $id, Result $response): iterable
     {
         foreach ($response['Items'] as $item) {
-            /** @var Event $class */
-            $class = $this->classMapper->decode($item[self::FIELD_EVENT_TYPE]['S']);
+            $unwrapped = $this->marshaler->unmarshalValue(['M' => $item]);
 
-            yield $class::deserialize($this->marshaler->unmarshalValue($item[self::FIELD_PAYLOAD]));
+            /** @var Event $class */
+            $class = $this->classMapper->decode($unwrapped[self::FIELD_EVENT_TYPE]);
+
+            yield new StoredEvent(
+                $id::fromString($unwrapped[self::FIELD_EVENT_STREAM]),
+                $class::deserialize($unwrapped[self::FIELD_PAYLOAD]),
+                $unwrapped[self::FIELD_VERSION],
+                Carbon::parse($unwrapped[self::FIELD_CREATED_AT])->toImmutable(),
+            );
         }
     }
 }

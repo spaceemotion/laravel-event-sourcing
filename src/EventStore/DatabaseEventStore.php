@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -115,14 +116,19 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
             ->where(self::FIELD_AGGREGATE_ID, $id)
             ->orderBy(self::FIELD_VERSION)
             ->cursor()
-            ->mapWithKeys(
-                function (stdClass $row): array {
+            ->map(
+                function (stdClass $row) use ($id): StoredEvent  {
                     $payload = json_decode($row->{self::FIELD_PAYLOAD}, true, 32, JSON_THROW_ON_ERROR);
 
                     /** @var Event $base */
                     $base = $this->classMapper->decode($row->{self::FIELD_EVENT_TYPE});
 
-                    return [(int)$row->{self::FIELD_VERSION} => $base::deserialize($payload)];
+                    return new StoredEvent(
+                        $id::fromString($row->{self::FIELD_AGGREGATE_ID}),
+                        $base::deserialize($payload),
+                        (int)$row->{self::FIELD_VERSION},
+                        Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable()
+                    );
                 }
             );
     }

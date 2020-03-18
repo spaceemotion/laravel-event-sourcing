@@ -12,11 +12,9 @@ namespace Spaceemotion\LaravelEventSourcing;
 final class Snapshot implements Event
 {
     private array $payload;
-    private int $version;
 
-    public function __construct(int $version, array $payload)
+    public function __construct(array $payload)
     {
-        $this->version = $version;
         $this->payload = $payload;
     }
 
@@ -25,17 +23,12 @@ final class Snapshot implements Event
         return $this->payload;
     }
 
-    public function getVersion(): int
-    {
-        return $this->version;
-    }
-
     /**
      * {@inheritDoc}
      */
     public static function deserialize(array $payload): self
     {
-        return new self($payload['version'], $payload['payload']);
+        return new self($payload);
     }
 
     /**
@@ -43,9 +36,6 @@ final class Snapshot implements Event
      */
     public function serialize(): array
     {
-        return [
-            'version' => $this->version,
-            'payload' => $this->payload,
-        ];
+        return $this->payload;
     }
 }

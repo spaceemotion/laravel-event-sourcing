@@ -103,7 +103,7 @@ abstract class AggregateRoot
      * from the given event store. This is done by fetching
      * all past events and applying them in order.
      *
-     * @param Event[] $events
+     * @param StoredEvent[] $events
      * @return $this
      */
     public static function rebuild(iterable $events): self
@@ -111,15 +111,8 @@ abstract class AggregateRoot
         $instance = new static();
 
         foreach ($events as $event) {
-            if ($event instanceof Snapshot) {
-                $instance->applySnapshot($event->getPayload());
-                $instance->version = $event->getVersion();
-                continue;
-            }
-
-            $instance->apply($event);
-
-            $instance->version++;
+            $instance->version = $event->getVersion();
+            $instance->apply($event->getEvent());
         }
 
         return $instance;
@@ -170,7 +163,11 @@ abstract class AggregateRoot
     protected function getEventHandler(Event $event): ?callable
     {
         $handlers = $this->callableCache[static::class] ?? (
-            $this->callableCache[static::class] = $this->getEventHandlers()
+            $this->callableCache[static::class] = $this->getEventHandlers() + [
+                Snapshot::class => function (Snapshot $event): void {
+                    $this->applySnapshot($event->getPayload());
+                },
+            ]
         );
 
         return $handlers[get_class($event)] ?? null;
