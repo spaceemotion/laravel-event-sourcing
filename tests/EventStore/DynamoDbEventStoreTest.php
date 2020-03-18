@@ -21,10 +21,6 @@ class DynamoDbEventStoreTest extends EventStoreTest
             'region' => 'localhost',
             'version' => 'latest',
             'endpoint' => sprintf('http://%s:%s', env('DYNAMO_DB_HOST'), env('DYNAMO_DB_PORT')),
-            'credentials' => [
-                'key' => 'x2ny5g',
-                'secret' => 'qwc28',
-            ],
         ]);
 
         if (!in_array($tableName, $client->listTables()->get('TableNames'), true)) {
