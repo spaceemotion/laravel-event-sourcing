@@ -38,7 +38,6 @@ class TestAggregate
     /**
      * Creates a list of stored events from the given list of regular events.
      *
-     * @param AggregateId $id
      * @param Event[] $events
      * @return iterable|StoredEvent[]
      */
@@ -51,7 +50,7 @@ class TestAggregate
                 $id,
                 $event,
                 $version,
-                Carbon::now()->toImmutable()
+                Carbon::now()->toImmutable(),
             );
 
             $version++;

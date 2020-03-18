@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests;
 
-use Carbon\Carbon;
 use PHPUnit\Framework\TestCase;
 use Spaceemotion\LaravelEventSourcing\EventStore\InMemoryEventStore;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;

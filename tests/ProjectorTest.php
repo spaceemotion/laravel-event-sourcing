@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests;
 
-use PHPUnit\Framework\TestCase;
 use Illuminate\Events\Dispatcher as LaravelDispatcher;
+use PHPUnit\Framework\TestCase;
 use Spaceemotion\LaravelEventSourcing\EventDispatcher;
 use Spaceemotion\LaravelEventSourcing\StoredEvent;
 

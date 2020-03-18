@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\Tests;
 
+use Spaceemotion\LaravelEventSourcing\AggregateId;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\Ids\Uuid;
-use Spaceemotion\LaravelEventSourcing\AggregateId;
 
 class TestCreatedEvent implements Event
 {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 use Spaceemotion\LaravelEventSourcing\AggregateId;
@@ -56,7 +56,7 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
     public function retrieveFromLastSnapshot(AggregateId $id): iterable
     {
         $query = $this->newQuery()
-            ->where('version', '>=', static function (Builder $query) use ($id) {
+            ->where('version', '>=', static function (Builder $query) use ($id): void {
                 $query
                     ->from('stored_events')
                     ->where(self::FIELD_AGGREGATE_ID, (string) $id)
@@ -121,7 +121,7 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
             ->orderBy(self::FIELD_VERSION)
             ->cursor()
             ->map(
-                function (stdClass $row) use ($id): StoredEvent  {
+                function (stdClass $row) use ($id): StoredEvent {
                     $payload = json_decode($row->{self::FIELD_PAYLOAD}, true, 32, JSON_THROW_ON_ERROR);
 
                     /** @var Event $base */
@@ -131,9 +131,9 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
                         $id::fromString($row->{self::FIELD_AGGREGATE_ID}),
                         $base::deserialize($payload),
                         (int)$row->{self::FIELD_VERSION},
-                        Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable()
+                        Carbon::parse($row->{self::FIELD_CREATED_AT})->toImmutable(),
                     );
-                }
+                },
             );
     }
 }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\Tests\EventStore;
 
 use Carbon\Carbon;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Event;
 use Spaceemotion\LaravelEventSourcing\EventStore\EventStore;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
@@ -16,8 +15,8 @@ use Spaceemotion\LaravelEventSourcing\Tests\TestCase;
 use Spaceemotion\LaravelEventSourcing\Tests\TestCreatedEvent;
 use Spaceemotion\LaravelEventSourcing\Tests\TestEvent;
 
-use function range;
 use function array_push;
+use function range;
 
 abstract class EventStoreTest extends TestCase
 {

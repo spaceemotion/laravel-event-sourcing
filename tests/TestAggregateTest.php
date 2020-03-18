@@ -28,7 +28,7 @@ class TestAggregateTest extends TestCase
     public function it_only_asserts_new_events(): void
     {
         $aggregate = TestAggregateRoot::rebuild(TestAggregate::given(Uuid::next(), [
-            new TestEvent(['foo' => 'bar'])
+            new TestEvent(['foo' => 'bar']),
         ]));
 
         TestAggregate::for($aggregate)

@@ -162,15 +162,15 @@ abstract class AggregateRoot
      */
     protected function getEventHandler(Event $event): ?callable
     {
-        $handlers = $this->callableCache[static::class] ?? (
+        if (!isset($this->callableCache[static::class])) {
             $this->callableCache[static::class] = $this->getEventHandlers() + [
                 Snapshot::class => function (Snapshot $event): void {
                     $this->applySnapshot($event->getPayload());
                 },
-            ]
-        );
+            ];
+        }
 
-        return $handlers[get_class($event)] ?? null;
+        return $this->callableCache[static::class][get_class($event)] ?? null;
     }
 
     /**

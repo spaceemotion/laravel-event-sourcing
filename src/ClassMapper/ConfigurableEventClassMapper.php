@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\ClassMapper;
 
-use Spaceemotion\LaravelEventSourcing\Snapshot;
-
 use Spaceemotion\LaravelEventSourcing\EventStore\SnapshotEventStore;
+use Spaceemotion\LaravelEventSourcing\Snapshot;
 
 use function array_flip;
 

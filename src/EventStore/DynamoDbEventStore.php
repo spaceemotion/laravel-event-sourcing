@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing\EventStore;
 
-use Aws\Result;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
+use Aws\Result;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Spaceemotion\LaravelEventSourcing\AggregateId;
-use Spaceemotion\LaravelEventSourcing\StoredEvent;
 use Spaceemotion\LaravelEventSourcing\AggregateRoot;
 use Spaceemotion\LaravelEventSourcing\ClassMapper\EventClassMapper;
 use Spaceemotion\LaravelEventSourcing\Event;
 use Spaceemotion\LaravelEventSourcing\EventDispatcher;
 use Spaceemotion\LaravelEventSourcing\Exceptions\ConcurrentModificationException;
+use Spaceemotion\LaravelEventSourcing\StoredEvent;
 
 use function get_class;
 
