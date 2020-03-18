@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Spaceemotion\LaravelEventSourcing\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Spaceemotion\LaravelEventSourcing\Ids\Uuid;
 use Spaceemotion\LaravelEventSourcing\TestAggregate;
 
 class TestAggregateTest extends TestCase
@@ -25,9 +26,9 @@ class TestAggregateTest extends TestCase
     /** @test */
     public function it_only_asserts_new_events(): void
     {
-        $aggregate = TestAggregateRoot::rebuild([
-            new TestEvent(['foo' => 'bar']),
-        ]);
+        $aggregate = TestAggregateRoot::rebuild(TestAggregate::given(Uuid::next(), [
+            new TestEvent(['foo' => 'bar'])
+        ]));
 
         TestAggregate::for($aggregate)
             ->assertNotRecorded(TestEvent::class)

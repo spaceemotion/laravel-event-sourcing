@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Spaceemotion\LaravelEventSourcing;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\LazyCollection;
 use PHPUnit\Framework\Assert;
 
@@ -32,6 +33,29 @@ class TestAggregate
             ->map(static fn(StoredEvent $event): Event => $event->getEvent())
             ->groupBy(static fn(Event $event): string => get_class($event))
             ->toArray();
+    }
+
+    /**
+     * Creates a list of stored events from the given list of regular events.
+     *
+     * @param AggregateId $id
+     * @param Event[] $events
+     * @return iterable|StoredEvent[]
+     */
+    public static function given(AggregateId $id, array $events): iterable
+    {
+        $version = 1;
+
+        foreach ($events as $event) {
+            yield new StoredEvent(
+                $id,
+                $event,
+                $version,
+                Carbon::now()->toImmutable()
+            );
+
+            $version++;
+        }
     }
 
     /**
