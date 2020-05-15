@@ -42,4 +42,14 @@ class AggregateRootTest extends TestCase
         $clone = TestAggregateRoot::rebuild($store->retrieveAll($root->getId()));
         self::assertEquals($root->getCurrentVersion(), $clone->getCurrentVersion());
     }
+
+    /** @test */
+    public function it_only_snapshots_state_on_modified_aggregates(): void
+    {
+        $root = TestAggregateRoot::new();
+        self::assertCount(1, $root->flushEvents());
+
+        $root->recordSnapshot();
+        self::assertCount(0, $root->flushEvents());
+    }
 }

@@ -92,9 +92,16 @@ abstract class AggregateRoot
      *
      * This also increases the internal version number so any further
      * changes don't try to overwrite this "snapshot version".
+     *
+     * In case no events have been recorded since the last flush,
+     * this will not create a snapshot instead.
      */
     public function recordSnapshot(): self
     {
+        if (count($this->events) === 0) {
+            return $this;
+        }
+
         return $this->record(new Snapshot($this->buildSnapshot()));
     }
 
