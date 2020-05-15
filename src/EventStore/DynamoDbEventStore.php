@@ -94,7 +94,7 @@ class DynamoDbEventStore implements EventStore, SnapshotEventStore
                         self::FIELD_EVENT_TYPE => ['S' => $this->classMapper->encode(get_class($event->getEvent()))],
                         self::FIELD_VERSION => ['N' => (int) $version],
                         self::FIELD_PAYLOAD => $this->marshaler->marshalValue($event->getEvent()->serialize()),
-                        self::FIELD_CREATED_AT => ['S' => (string) $event->getPersistedAt()],
+                        self::FIELD_CREATED_AT => ['S' => (string) $event->getRecordedAt()],
                     ],
                     'ExpressionAttributeNames' => [
                         '#Version' => self::FIELD_VERSION,

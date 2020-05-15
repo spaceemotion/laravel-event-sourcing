@@ -11,15 +11,15 @@ final class StoredEvent
     private AggregateId $aggregateId;
     private Event $event;
     private int $version;
-    private CarbonImmutable $persistedAt;
+    private CarbonImmutable $recordedAt;
 
 
-    public function __construct(AggregateId $aggregateId, Event $event, int $version, CarbonImmutable $persistedAt)
+    public function __construct(AggregateId $aggregateId, Event $event, int $version, CarbonImmutable $recordedAt)
     {
         $this->event = $event;
         $this->aggregateId = $aggregateId;
         $this->version = $version;
-        $this->persistedAt = $persistedAt;
+        $this->recordedAt = $recordedAt;
     }
 
     public function getEvent(): Event
@@ -37,8 +37,8 @@ final class StoredEvent
         return $this->version;
     }
 
-    public function getPersistedAt(): CarbonImmutable
+    public function getRecordedAt(): CarbonImmutable
     {
-        return $this->persistedAt;
+        return $this->recordedAt;
     }
 }

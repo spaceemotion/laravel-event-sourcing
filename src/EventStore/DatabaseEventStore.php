@@ -106,7 +106,7 @@ class DatabaseEventStore implements EventStore, SnapshotEventStore
     {
         return [
             self::FIELD_AGGREGATE_ID => (string) $event->getAggregateId(),
-            self::FIELD_CREATED_AT => (string) $event->getPersistedAt(),
+            self::FIELD_CREATED_AT => (string) $event->getRecordedAt(),
             self::FIELD_EVENT_TYPE => $this->classMapper->encode(get_class($event->getEvent())),
             self::FIELD_META_DATA => json_encode([], JSON_THROW_ON_ERROR, 32), // TODO
             self::FIELD_PAYLOAD => json_encode($event->getEvent()->serialize(), JSON_THROW_ON_ERROR, 32),
