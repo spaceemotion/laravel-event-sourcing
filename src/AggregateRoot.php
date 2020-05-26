@@ -17,7 +17,7 @@ use function get_class;
  */
 abstract class AggregateRoot
 {
-    /** @var array<string,array<string,callable|Closure>> */
+    /** @var array<string,callable|Closure> */
     protected array $callableCache = [];
 
     /** @var StoredEvent[] */
@@ -35,7 +35,11 @@ abstract class AggregateRoot
      */
     final protected function __construct()
     {
-        // Nothing to do here
+        $this->callableCache = $this->getEventHandlers() + [
+            Snapshot::class => function (Snapshot $event): void {
+                $this->applySnapshot($event->getPayload());
+            },
+        ];
     }
 
     /**
@@ -169,15 +173,7 @@ abstract class AggregateRoot
      */
     protected function getEventHandler(Event $event): ?callable
     {
-        if (!isset($this->callableCache[static::class])) {
-            $this->callableCache[static::class] = $this->getEventHandlers() + [
-                Snapshot::class => function (Snapshot $event): void {
-                    $this->applySnapshot($event->getPayload());
-                },
-            ];
-        }
-
-        return $this->callableCache[static::class][get_class($event)] ?? null;
+        return $this->callableCache[get_class($event)] ?? null;
     }
 
     /**
