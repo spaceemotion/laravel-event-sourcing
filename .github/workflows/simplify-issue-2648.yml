@@ -1,0 +1,27 @@
+name: "Simplify Issue #2648"
+
+on: [workflow_dispatch]
+
+jobs:
+  convert-to-ecs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, dom, fileinfo, pdo_sqlite
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Install sniffer-fixer-to-ecs-converter
+        run: composer require symplify/sniffer-fixer-to-ecs-converter --dev
+
+      - name: Run the converter
+        run: vendor/bin/sniffer-fixer-to-ecs-converter convert phpcs.xml
